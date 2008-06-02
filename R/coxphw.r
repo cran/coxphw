@@ -152,8 +152,7 @@ function(
         
         n <- nrow(data)
         pl<-FALSE
-        if (robust==F) robcov<-0
-        else robcov<-1
+        robcov<-0+1*(robust==T)+2*(jack==T)
 	
 	obj <- decomposeSurv(formula, data, sort=FALSE, offset)
         obj$resp[, 1] <- obj$resp[, 1] + 0.00001
@@ -186,7 +185,15 @@ function(
         event1[-1][diff(obj$resp[, 2]) == 0] <- 0  
         ties <- (diff(c(-999, obj$resp[, 2])) == 0)
   if(censcorr) {
-   obskm<-my.survfit(Surv(obj$resp[,1],obj$resp[,2],1-obj$resp[,3]), data)
+   time.obs.km <- (-(1:max(id)))
+   cens.obs.km <- ((1:max(id)))
+   for(id.i in 1:max(id)){
+    time.obs.km[id.i]<-max(obj$resp[id==id.i,2])
+    cens.obs.km[id.i]<-1-max(obj$resp[id==id.i,3])
+   }
+   obskm<-my.survfit(Surv(time.obs.km,cens.obs.km))
+   obskm$surv<-cbind(1,obskm$surv)
+   obskm$time<-cbind(0,obskm$time)
    if(!is.call(breslow)&!is.call(prentice)&!is.call(taroneware)) {
      w.obskm<-w
      for(i in 1:n) {
@@ -293,24 +300,23 @@ function(
     DFBETA <- matrix(0,max(id),k+NTDE)
     CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, id)
     PARMS <- c(n, k, robcov, maxit, maxhs, maxstep, epsilon, 0, 0, 0, 0, 0, NGV, NTDE, max(id), ind.offset)
-    IOARRAY <- rbind(rep(1, k+NTDE), matrix(0, 2+2*(k+NTDE), k+NTDE))
+    IOARRAY <- rbind(rep(1, k+NTDE), matrix(0, 2+3*(k+NTDE), k+NTDE))
     if(NTDE>0)
           IOARRAY[4, (k+1):(k+NTDE)] <- obj$timeind
         storage.mode(CARDS) <- "double"
         storage.mode(PARMS) <- "double"
         storage.mode(IOARRAY) <- "double"
-        storage.mode(DFBETA) <- "double"
+#        storage.mode(DFBETA) <- "double"
 	
         ## --------------- call Fortran-Routine WEIGHTEDCOX ----------------------------------
         value <- .Fortran("weightedcox",
-                          CARDS,
+                          CARDS = CARDS,
                           outpar = PARMS,
                           outtab = IOARRAY, 
-                          dfbetaresid = DFBETA,
                           PACKAGE=coxphw)
         if(value$outpar[8])
           warning("Error in routine WEIGHTEDCOX; parms8 <> 0")
-        outtab <- matrix(value$outtab, nrow=3+2*(k+NTDE))
+        outtab <- matrix(value$outtab, nrow=3+3*(k+NTDE))
         iter <- value$outpar[10]
         ## --------------- process output object <fit> of class coxphw -------
         coef.orig <- outtab[3,  ]
@@ -321,42 +327,11 @@ function(
         dfbeta.resid<-NULL
         if(robust==T) {
            cov.lw<-matrix(outtab[(k+NTDE+4):(3+2*(k+NTDE)), ], ncol=k+NTDE) / (Z.sd %*% t(Z.sd))
-           dfbeta.resid <- value$dfbetaresid / t(matrix(Z.sd,k+NTDE,max(id)))
+           dfbeta.resid <- value$CARDS[1:max(id),1:(k+NTDE)] / t(matrix(Z.sd,k+NTDE,max(id)))
         }
         if(jack==T) {
-          maxid<-max(id)
-          dfbeta.resid<-matrix(0,maxid,k+NTDE)
-          CARDS.orig<-CARDS
-          outtab.orig<-outtab
-          for(iid in 1:maxid) {
-            CARDS<-CARDS.orig[id!=iid,]   
-            CARDS[id[id!=iid]>iid,ncol(CARDS)]<-CARDS[id[id!=iid]>iid,ncol(CARDS)]-1
-            n.jack<-nrow(CARDS)
-            PARMS<-c(n.jack,k,0,maxit,maxhs,maxstep,epsilon, 0, 0, 0, 0, 0, NGV, NTDE, maxid-1, ind.offset)
-            IOARRAY<- rbind(rep(1, k+NTDE), matrix(0, 2+2*(k+NTDE), k+NTDE))
-
-            if(NTDE>0)                           
-                      IOARRAY[4, (k+1):(k+NTDE)] <- obj$timeind
-            storage.mode(CARDS) <- "double"      
-            storage.mode(PARMS) <- "double"      
-            storage.mode(IOARRAY) <- "double"    
-            storage.mode(DFBETA) <- "double"     
-        ## --------------- call Fortran-Routine WEIGHTEDCOX ----------------------------------
-           value <- .Fortran("weightedcox",                                    
-                             CARDS,                                            
-                             outpar = PARMS,                                   
-                             outtab = IOARRAY,                                 
-                             dfbetaresid = DFBETA,                             
-                             PACKAGE=coxphw)                                
-           if(value$outpar[8])                                                 
-             warning("Error in routine WEIGHTEDCOX; parms8 <> 0")                 
-           outtab <- matrix(value$outtab, nrow=3+2*(k+NTDE)) 
-           dfbeta.resid[iid,]<-coef.orig-outtab[3,]
-           }
-           cov.j<-(maxid-1)/maxid*t(dfbeta.resid)%*%dfbeta.resid/ (Z.sd %*% t(Z.sd))
-           dfbeta.resid <- dfbeta.resid / t(matrix(Z.sd,k+NTDE,max(id)))
-           CARDS<-CARDS.orig
-           outtab<-outtab.orig
+           cov.j<-matrix(outtab[(3+2*(k+NTDE)+1):(3+3*(k+NTDE)), ], ncol=k+NTDE) / (Z.sd %*% t(Z.sd))
+           dfbeta.resid <- value$CARDS[1:max(id),1:(k+NTDE)] / t(matrix(Z.sd,k+NTDE,max(id)))
            }
         cov.method<-"Lin-Sasieni"
         covs<-cov.ls
@@ -434,7 +409,7 @@ function(
     weights<-object$w.matrix[,2:4]
     wlabel<-"Weight"
     }
-   plot(time, weights[,1],type="l",lty=1,ylim=c(min(weights),max(weights)), objectlab=label, ylab=wlabel)
+   plot(time, weights[,1],type="l",lty=1,ylim=c(min(weights),max(weights)), xlab=label, ylab=wlabel)
    lines(time, weights[,2],lty=2)
    lines(time, weights[,3],lty=3)
    legend(min(time),0.95*max(weights),c("Raw weight","Censoring weight","Normalized total weight"),lty=1:3, lwd=1)

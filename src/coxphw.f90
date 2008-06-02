@@ -1,5 +1,6 @@
-SUBROUTINE WEIGHTEDCOX(cards, parms, IOARRAY, dfbeta)
-!DEC$ ATTRIBUTES DLLEXPORT :: weightedcox
+SUBROUTINE WEIGHTEDCOX(cards, parms, IOARRAY)
+!DEC$ ATTRIBUTES DLLEXPORT :: WEIGHTEDCOX
+
 IMPLICIT DOUBLE PRECISION (A-H,O-Z)  
 
 
@@ -18,7 +19,7 @@ integer, dimension (int(parms(1))) :: IC, ICMSF, patid
 integer, dimension (int(parms(2)+parms(14))) :: IFLAG
 real*8, dimension (int(parms(15)), int(parms(2)+parms(14))) :: dfbeta
 real*8, dimension (int(parms(1)),int((2*parms(2)+4+2*(parms(14))))) :: cards
-real*8, dimension (int((3+2*(parms(2)+parms(14)))),int((parms(2)+parms(14)))) :: IOARRAY
+real*8, dimension (int((3+3*(parms(2)+parms(14)))),int((parms(2)+parms(14)))) :: IOARRAY
 real*8, dimension (14) :: DER, EREST
 logical, dimension (int(parms(2)+parms(14)),int(parms(2)+parms(14))) :: mask
 real*8, dimension (int(parms(1)),int(parms(14)+1)) :: ft
@@ -41,7 +42,7 @@ Irobust=parms(3)
 imaxit=Parms(4)
 imaxhs=parms(5)
 step=parms(6)
-crili=parms(7)
+xconv=parms(7)
 
 patid=int(cards(:,int((2*parms(2)+4+2*(parms(14))))))
 
@@ -77,7 +78,7 @@ if (ntde .gt. 0) then
 !   write(6,*) ft(i,j)
 !  end do
   ft(:,1:ntde)=cards(:,(2*ip+3+ntde+1+ioffset):(2*ip+3+ntde*2+ioffset))
-  ftmap(:)=ioarray(4,(ip+1):(ip+ntde))
+  ftmap(1:ntde)=ioarray(4,(ip+1):(ip+ntde))
 !  end do
 else
  ft=0
@@ -115,7 +116,7 @@ end do
 
 isep=0
 XL=0.
-xl0=xl-2*crili
+xl0=xl-.000002
 
 b0=0.
 
@@ -198,7 +199,7 @@ do while((iconv .eq. 0) .and. (iter .lt. imaxit))
  ICONV=1
  if (isflag .gt. 0) then
   XX=dabs(B-B0)                                                   
-  IF(any(XX.GT.CRILI)) ICONV=0
+  IF(any(XX.GT.xconv)) ICONV=0
  end if
 end do
 
@@ -222,7 +223,7 @@ do j=1,ip+ntde
   end do
  end do
 
-if (irobust .eq. 1) then   ! Lin-Wei-Varianz
+if (irobust .eq. 1 .or. irobust .eq. 3) then   ! Lin-Wei-Varianz
  CALL dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,ainv,dfbeta,doffset)
  vmlw=matmul(transpose(dfbeta),dfbeta)
  do j=1,ip+ntde
@@ -232,10 +233,16 @@ if (irobust .eq. 1) then   ! Lin-Wei-Varianz
  end do
  wk=vmlw
 end if
-!if (irobust .eq. 2) then   ! One-step-Jackknife-Varianz
-! CALL dfbetaresid(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,doffset)
-! vm=matmul(transpose(dfbeta),dfbeta)
-!end if
+if (irobust .ge. 2) then   ! Jackknife-Varianz
+ CALL dfbetaresid(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,doffset,imaxit,xconv)
+ vm=real(numbpatients-1)/real(numbpatients)*matmul(transpose(dfbeta),dfbeta)
+ do j=1,ip+ntde
+  do j2=1,ip+ntde
+   ioarray((3+2*(ip+ntde)+j),j2)=vm(j,j2)
+  end do
+ end do
+ wk=vm
+end if
 
 
 
@@ -270,6 +277,8 @@ parms(9)=zw
 parms(8)=jcode
 parms(11)=xl
 parms(10)=iter
+
+cards(1:numbpatients, 1:(ip+ntde)) = dfbeta
 
 !close(unit=6)
 
@@ -566,8 +575,13 @@ do i=1, N
  end if 
 end do
 
+xges(:,1:ip)=x(:,1:ip)
 
 do i=1,n
+ if (ntde .gt. 0) then
+  xges(i,(ip+1):(ip+ntde))=x(i,ftmap(1:ntde))*ft(i,1:ntde)
+ end if
+
  if (ic(i) .ne. 0) then
   u_work(i,:)=score_weights(i,:)*(xges(i,:)-xebx(i,:)/sebx(i))
  else
@@ -576,6 +590,9 @@ do i=1,n
  do ih=1,n
   zeitp=t2(ih)-0.00001
   if ((ic(ih) .ne. 0) .and. (t1(i) .lt. zeitp) .and. (t2(i) .ge. zeitp)) then
+   if (ntde .gt. 0) then
+    xges(i,(ip+1):(ip+ntde))=x(i,ftmap(1:ntde))*ft(ih,1:ntde)
+   end if
    u_work(i,:)=u_work(i,:)-score_weights(ih,:)*exp(dot_product(xges(i,:),b)+offset)/sebx(ih)*(xges(i,:)-xebx(ih,:)/sebx(ih))
   end if
  end do
@@ -596,17 +613,17 @@ dfbeta=matmul(dfbeta,vm)
 RETURN
 end                                                            
 
-subroutine dfbetaresid(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,ainv,dfbeta,offset)
+subroutine dfbetaresid(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,ainv,dfbeta,offset, imaxit, xconv)
 
  IMPLICIT DOUBLE PRECISION (A-H,O-Z)
  real*8, dimension (IP+ntde,IP+ntde) :: DINFO, DINFOI, SD, SDI, WK, help, vm
  real*8, dimension (IP+ntde,IP+ntde,IP+ntde) :: dabl
- real*8 SEBX, zeitp
+ real*8 SEBX, zeitp, xconv
 ! real*8, dimension (IP+ntde) :: XEBX, bresxges
  real*8, dimension (IP+ntde) :: XEBX
- real*8, dimension (IP+ntde,IP+ntde) :: XXEBX
+ real*8, dimension (IP+ntde,IP+ntde) :: XXEBX, sda, ainv
 ! real*8, dimension (N+1, IP, Ip, IP) :: XXXEBX
- real*8, dimension (IP+ntde) :: FD, B, h1, h2, h3
+ real*8, dimension (IP+ntde) :: FD, B, h1, h2, h3, bsave, step
  real*8, dimension (N) :: EBX, BX, T1, t2, WKS, hh0, hh1, hh2, offset
  !integer, dimension (N) :: IC,ibresc
  !real*8, dimension (N,IP) :: X, bresx
@@ -630,60 +647,89 @@ subroutine dfbetaresid(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,n
  dfbeta(:,:)=0.
 
  xges(:,1:ip)=x
+ bsave=b
 do ipatient=1,numbpatients
  fd(:)=0.
- do i=1,N
-  if (ic(i) .ne. 0 .and. (patid(i) .ne. ipatient)) then   
-!  if (ibresc(i) .ne. 0) then   
-   zeitp=t2(i)-0.00001
-   where ((t1 .lt. zeitp) .and. (t2.ge. zeitp) .and. (patid .ne. ipatient))
-!   where ((t1 .lt. zeitp) .and. (t2.ge. zeitp))
-    maske=.true. 
-   elsewhere
-    maske=.false.
-   end where
-!   bresxges(1:ip)=bresx(i,1:ip)
-   if (ntde .gt. 0) then
-    do j=(ip+1),(ip+ntde)
-     xges(:,j)=x(:,ftmap(j-ip))*spread(ft(i,j-ip),1,n)
-!     bresxges(j)=ft(i,j-ip)*bresx(i,ftmap(j-ip))
-    end do
-   end if
+ sda(:,:)=0.
+ b=bsave 
+ iconv = 0
+ iter=0
+ do while((iconv .eq. 0) .and. (iter .lt. imaxit))
+        ! write(6,*) iter, b
+      iter=iter+1
+     fd(:)=0.
+     SDA(:,:)=0.
+     do i=1,N
+      if (ic(i) .ne. 0 .and. (patid(i) .ne. ipatient)) then  
+    !  if (ibresc(i) .ne. 0) then   
+       zeitp=t2(i)-0.00001
+       where ((t1 .lt. zeitp) .and. (t2.ge. zeitp) .and. (patid .ne. ipatient))
+    !   where ((t1 .lt. zeitp) .and. (t2.ge. zeitp))
+        maske=.true. 
+       elsewhere
+        maske=.false.
+       end where
+    !   bresxges(1:ip)=bresx(i,1:ip)
+       if (ntde .gt. 0) then
+        do j=(ip+1),(ip+ntde)
+         xges(:,j)=x(:,ftmap(j-ip))*spread(ft(i,j-ip),1,n)
+    !     bresxges(j)=ft(i,j-ip)*bresx(i,ftmap(j-ip))
+        end do
+       end if
 
-   bx=matmul(xges,b)+offset
-   ebx=dexp(bx)
+       bx=matmul(xges,b)+offset
+       ebx=dexp(bx)
 
-   where (maske .eqv. .false.)
-    bx=0.
-    ebx=0.
-   end where
-   sebx=sum(ebx,1,maske)
-   do j=1,ipges
-    hh0=xges(:,j)*ebx
-    xebx(j)=sum(hh0,1,maske)
-    do k=1,ipges
-     hh1=hh0*xges(:,k)
-     xxebx(j,k)=sum(hh1,1,maske)
-    end do
-   end do
+       where (maske .eqv. .false.)
+        bx=0.
+        ebx=0.
+       end where
+       sebx=sum(ebx,1,maske)
+       do j=1,ipges
+        hh0=xges(:,j)*ebx
+        xebx(j)=sum(hh0,1,maske)
+        do k=1,ipges
+         hh1=hh0*xges(:,k)
+         xxebx(j,k)=sum(hh1,1,maske)
+        end do
+       end do
 
-   if (sebx .gt. dlowest) then
-    dlogsebx=dlog(sebx)
-   else
-    dlogsebx=dlog(dlowest)
-   endif
-    
-   do j=1,ipges
-    FD(J)=FD(J)+(Xges(i,J)-ic(i)*XEBX(J)/SEBX)*score_weights(i,j)                           
-   end do
-  end if
+       if (sebx .gt. dlowest) then
+        dlogsebx=dlog(sebx)
+       else
+        dlogsebx=dlog(dlowest)
+       endif
+        
+       do j=1,ipges
+        FD(J)=FD(J)+(Xges(i,J)-ic(i)*XEBX(J)/SEBX)*score_weights(i,j)    
+         do k=1,ipges
+           SDa(J,K)=SDA(J,K)-ic(i)*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*dsqrt(score_weights(i,j))*dsqrt(score_weights(i,k))
+         end do
+       end do
+
+      end if
+     end do
+     wk=-sda
+     EPS=.000000000001D0
+     ifail=0
+     CALL INVERT(WK,ipges,Ipges,ainv,Ipges,EPS,IFAIL)
+     step=-matmul(ainv,fd)
+     IF(any(abs(step) .GT. XCONV)) then
+       ICONV=0
+     else 
+      iconv=1
+     end if
+     b=b-step
  end do
  do j=1,ipges
  !TT=dot_product(vm(I,:),fd(:)*iflag(:))
-  dfbeta(ipatient,:)=-matmul(vm,fd)
+  dfbeta(ipatient,:)=bsave-b
 !  dfbeta(ipatient,j)=fd(j)*sum(vm(j,:))
  end do
-end do
+end do !ipatient
+b=bsave
+
+
  RETURN
 
 

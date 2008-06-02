@@ -80,6 +80,25 @@ Breslow's tie-handling method is used by the program, other methods to handle ti
 By default, the program estimates the covariance matrix using Lin (1991) and Sasieni (1993) sandwich estimate \eqn{A^{-1}BA^{-1}} with \eqn{-A} and \eqn{-B} 
 denoting the sum of contributions to the second derivative of the log likelihood, weighted by \eqn{w(t_j)} and \eqn{w(t_j)^2}, respectively. 
 This estimate is independent from the scaling of the weights and reduces to the inverse of the information matrix in case of no weighting. 
+
+In case of censoring Schemper, Wakounig and Heinze (2008) proposed to multiply the weights by a correction which particularly upweights late risk sets by the
+inverse "follow-up" Kaplan-Meier estimate. Using this correction and Prentice weighting one obtains an average hazard ratio which is 
+a consistent estimator of the odds of concordance: \eqn{Pr(T_1>T_0)/Pr(T_1<T_0)}, where \eqn{T_1} and \eqn{T_0} are the survival times of two randomly 
+drawn subjects that differ in the indepependent variable by one unit. The weighting by the number of subjects at risk (Breslow weights)
+might be preferred if robust estimation is desired. In case of mixed weighting (weights only used for model terms that exhibit non-proportional
+hazards), the jackknife estimate of the variance should be used. Therefore, we recommend the following settings:
+
+Estimation of a representative average hazard ratio if there are censored survival times:
+
+ \code{   prentice=~<all model terms>, censcorr=T, robust=T}. 
+
+Robust estimation: 
+
+\code{   breslow=~<all model terms>, censcorr=F, robust=T}.
+
+Mixed weighting (proportional hazards assumed for some but not all model terms): 
+
+\code{   prentice=~<non-ph terms>, censcorr=T, jack=T}.
     }
 \value{
  \item{coefficients}{the parameter estimates}
@@ -99,12 +118,12 @@ This estimate is independent from the scaling of the weights and reduces to the 
  \item{ci.upper}{the upper confidence limits}
  \item{prob}{the p-values}
  \item{call}{the function call}
- \item{dfbeta}{the dfbeta residuals, only computed if robust=T, or if jack=T. For jack=T, the dfbeta residuals are the change in 
+ \item{dfbeta.resid}{the dfbeta residuals \eqn{D}, only computed if robust=T, or if jack=T. For jack=T, the dfbeta residuals are the change in 
  parameter estimates if each individual in turn is left out. For robust=T, the dfbeta residuals are computed
   via \eqn{UA^{-1}} with \eqn{U} and \eqn{A} denoting the matrix of score residuals and minus the weighted sum of 
   contributions to the second
   derivative of the likelihood. If jack=T   or robust=T, the covariance matrix
-  of the parameter estimates is computed from dfbeta'dfbeta.}
+  of the parameter estimates is based on \eqn{D'D}.}
  \item{cov.ls}{the covariance matrix computed by the Lin-Sasieni method (the default method)}
  \item{cov.lw}{the covariance matrix computed by the Lin-Wei method (robust covariance, only computed if robust==T)}
  \item{cov.j}{the covariance matrix computed by the jackknife method (only computed if jack==T)}
@@ -127,7 +146,9 @@ Schemper M, Wakounig S and Heinze G (2008). Weighted estimation for Cox regressi
 }
 \author{Georg Heinze and Meinhard Ploner}
 \note{
-A SAS macro WCM with similar functionality is offered for download at \url{http://www.meduniwien.ac.at/msi/biometrie}
+A SAS macro WCM with similar functionality is offered for download at:
+
+ \url{http://www.meduniwien.ac.at/msi/biometrie}
 }
 \seealso{coxph}
 \examples{
@@ -176,7 +197,7 @@ A SAS macro WCM with similar functionality is offered for download at \url{http:
 
 # weighted estimation, prentice (survival curve, Kaplan-Meier) weights
   
-fit2<-coxphw(data=gastric, Surv(time,status)~treat, prentice= ~treat, jack=TRUE, censcorr=TRUE)
+fit2<-coxphw(data=gastric, Surv(time,status)~treat, prentice= ~treat, robust=TRUE, censcorr=TRUE)
 # equivalent: fit2<-coxphw(data=gastric, Surv(time,status)~treat, km= ~treat)
 
 summary(fit2)
@@ -187,7 +208,7 @@ plotw(fit2)
 
 # weighted estimation, breslow (N at risk) weights                  
 
-fit3<-coxphw(data=gastric, Surv(time,status)~treat, prentice= ~treat,  robust=TRUE, censcorr=TRUE)
+fit3<-coxphw(data=gastric, Surv(time,status)~treat, breslow= ~treat)
 # equivalent: fit2<-coxphw(data=gastric, Surv(time,status)~treat, km= ~treat)
 
 summary(fit3)
