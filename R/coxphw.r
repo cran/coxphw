@@ -138,6 +138,7 @@ function(
  maxstep=2.5,                           #
  censcorr=FALSE,
  x=TRUE,
+ trunc.weights=1,
  ...                                    # N -> breslow; km -> prentice
 )
 ### by MP und GH, 2007
@@ -180,7 +181,7 @@ function(
         w<-w.raw
         formulaAll <- as.formula(paste(as.character(formula)[2], "1", sep="~"))
         my.survfit<-getFromNamespace("survfit","survival") 
-        fit <- my.survfit(Surv(obj$resp[,1],obj$resp[,2],obj$resp[,3]), data)
+        fit <- my.survfit(Surv(obj$resp[,1],obj$resp[,2],obj$resp[,3])~1, data)
         event <- event1 <- obj$resp[, 3]
         event1[-1][diff(obj$resp[, 2]) == 0] <- 0  
         ties <- (diff(c(-999, obj$resp[, 2])) == 0)
@@ -191,7 +192,7 @@ function(
     time.obs.km[id.i]<-max(obj$resp[id==id.i,2])
     cens.obs.km[id.i]<-1-max(obj$resp[id==id.i,3])
    }
-   obskm<-my.survfit(Surv(time.obs.km,cens.obs.km))
+   obskm<-my.survfit(Surv(time.obs.km,cens.obs.km)~1)
    obskm$surv<-cbind(1,obskm$surv)
    obskm$time<-cbind(0,obskm$time)
    if(!is.call(breslow)&!is.call(prentice)&!is.call(taroneware)) {
@@ -282,6 +283,14 @@ function(
     if(normalize)    w <- w * sum(event1) / sum((w * event1))
     weights[, match(cov.nameTW, cov.name)] <- w
     }
+  ### weight truncation (30-04-2009)
+  quant <- function(x)  { as.vector(quantile(x, probs=trunc.weights)) }
+  truncat <- apply(weights, 2, quant)
+  
+  for (i.wt in 1:ncol(weights))
+  {
+    weights[weights[,i.wt]>truncat[i.wt], i.wt] <- truncat[i.wt]
+  }
 
         ## number of weighted variables
   NGV <- sum(weights[1, ] != 1 | weights[n, ] != 1)
@@ -299,6 +308,7 @@ function(
 	mmm <- cbind(obj$mm1, obj$timedata)
     DFBETA <- matrix(0,max(id),k+NTDE)
     CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, id)
+    CARDS <- CARDS[order(obj$resp[,2],-obj$resp[,3]),]
     PARMS <- c(n, k, robcov, maxit, maxhs, maxstep, epsilon, 0, 0, 0, 0, 0, NGV, NTDE, max(id), ind.offset)
     IOARRAY <- rbind(rep(1, k+NTDE), matrix(0, 2+3*(k+NTDE), k+NTDE))
     if(NTDE>0)
@@ -352,7 +362,7 @@ function(
         if(!censcorr){
          w.obskm<-rep(1,n)
          }  
-        w.matrix<-cbind(time=obj$resp[,2],w.raw,w.obskm,w)[obj$resp[,3]!=0,]
+        w.matrix<-cbind(time=obj$resp[,2],w.raw,w.obskm,w=weights)[obj$resp[,3]!=0,]
         orderw<-order(w.matrix[,1])
         w.matrix<-w.matrix[orderw,,drop=F]
         fit <- list(coefficients = coefs,  dfbeta.resid = dfbeta.resid,
@@ -474,3 +484,4 @@ function(
         
         invisible(object)
 }
+

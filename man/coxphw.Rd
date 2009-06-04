@@ -4,7 +4,7 @@
 \description{
              This package implements weighted estimation in Cox regression, as proposed by Schemper (1992) and
              Sasieni (1993). Weighted estimation provides unbiased average hazard ratio estimates in case of
-             non-proportional hazards (Schemper, Wakounig and Heinze (2008)).
+             non-proportional hazards (Schemper, Wakounig and Heinze (2009)).
 }
 \usage{coxphw(formula, 
  data=parent.frame(),
@@ -24,6 +24,7 @@
  maxstep=2.5, 
  censcorr=FALSE,
  x=TRUE,
+ trunc.weights=1,
  \dots)
 }
 \arguments{
@@ -55,6 +56,8 @@
    \item{scale.weights}{specifies a scaling factor for the weights}
    \item{censcorr}{If set to TRUE, the weights are multiplied by the inverse marginal Kaplan-Meier estimator with reverse status indicator (default=F).}
    \item{x}{If set to TRUE, adds the model matrix to the output object.}
+   \item{trunc.weights}{Specifies quantile for weight truncation (default=1=no truncation). Weight truncation (restricting the weight values to
+   some maximum value) may improve efficiency of estimates. Use values of 0.99 for slight truncation, 0.95 for stronger truncation.}
    \item{\dots}{additional parameters}
 }
 \details{
@@ -81,7 +84,7 @@ By default, the program estimates the covariance matrix using Lin (1991) and Sas
 denoting the sum of contributions to the second derivative of the log likelihood, weighted by \eqn{w(t_j)} and \eqn{w(t_j)^2}, respectively. 
 This estimate is independent from the scaling of the weights and reduces to the inverse of the information matrix in case of no weighting. 
 
-In case of censoring Schemper, Wakounig and Heinze (2008) proposed to multiply the weights by a correction which particularly upweights late risk sets by the
+In case of censoring Schemper, Wakounig and Heinze (2009) proposed to multiply the weights by a correction which particularly upweights late risk sets by the
 inverse "follow-up" Kaplan-Meier estimate. Using this correction and Prentice weighting one obtains an average hazard ratio which is 
 a consistent estimator of the odds of concordance: \eqn{Pr(T_1>T_0)/Pr(T_1<T_0)}, where \eqn{T_1} and \eqn{T_0} are the survival times of two randomly 
 drawn subjects that differ in the indepependent variable by one unit. The weighting by the number of subjects at risk (Breslow weights)
@@ -142,7 +145,7 @@ Schemper M (1992).  Cox analysis of survival data with non-proportional hazard f
 
 Sasieni P (1993). Maximum Weighted Partial Likelihood Estimators for the Cox Model. \emph{Journal of the American Statistical Association} 88, 144-152.
 
-Schemper M, Wakounig S and Heinze G (2008). Weighted estimation for Cox regression revisited. \emph{submitted}.
+Schemper M, Wakounig S and Heinze G (2009). The estimation of average hazard ratios by weighted Cox regression. \emph{Statistics in Medicine, accepted. DOI:10.1002/sim.3623}.
 }
 \author{Georg Heinze and Meinhard Ploner}
 \note{

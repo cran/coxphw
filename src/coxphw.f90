@@ -380,6 +380,7 @@ SUBROUTINE LIKE(N,IP,X,T1,t2,IC,XL,FD,VM,B,JCODE, ngv, score_weights, ntde,ft, f
  !real*8, dimension (N,IP) :: X, bresx
  real*8, dimension (N,IP) :: X
  real*8, dimension (N, ip+ntde) :: xges, score_weights
+ logical ifastmode
  integer ngv, ntde
  logical, dimension (N) :: maske
  real*8, dimension (N,ntde+1) :: ft
@@ -416,6 +417,14 @@ SUBROUTINE LIKE(N,IP,X,T1,t2,IC,XL,FD,VM,B,JCODE, ngv, score_weights, ntde,ft, f
 ! end do
  xges(:,1:ip)=x
 
+if ((maxval(t1) .lt. minval(t2)) .and. (ntde .eq. 0)) then
+ ifastmode=.true.
+else
+ ifastmode=.false.
+end if
+
+
+if (ifastmode .eqv. .false.) then
  do i=1,N
   if (ic(i) .ne. 0) then   
 !   write(6,*) i
@@ -485,6 +494,71 @@ SUBROUTINE LIKE(N,IP,X,T1,t2,IC,XL,FD,VM,B,JCODE, ngv, score_weights, ntde,ft, f
    end do
   endif
  end do
+ end if
+ 
+ 
+ if (ifastmode .eqv. .true.) then
+  xl=0.
+  fd=0.
+  sda=0.
+  sdb=0.
+  xebx=0.
+  xxebx=0.
+  sebx=0.
+  ic_sum=0
+  bx=matmul(xges,b)+offset
+  ebx=dexp(bx)
+ 
+  do i=N,1,-1
+   if (i .gt. 1) then   !look ahead because of Breslow tie correction
+    if (t2(i) .eq. t2(i-1)) then
+     ic_current=0
+     ic_sum = ic_sum+ic(i)
+    else
+     ic_current=ic_sum+ic(i)
+     ic_sum=0
+    end if
+   else
+    ic_current=ic_sum+ic(i)
+    ic_sum=0
+   end if
+   sebx=sebx+ebx(i)
+   do j=1,ipges
+    hhh0=xges(i,j)*ebx(i)
+    xebx(j)=xebx(j)+hhh0
+    do k=1,ipges
+     hhh1=hhh0*xges(i,k)
+     xxebx(j,k)=xxebx(j,k)+hhh1
+    end do
+   end do
+
+   if (sebx .gt. dlowest) then
+    dlogsebx=dlog(sebx)
+   else
+    dlogsebx=dlog(dlowest)
+   endif
+    
+
+   if (ngv .eq. ipges) then 
+    XL=XL+(bx(i)*ic(i)-ic_current*DLOGSEBX)*score_weights(i,1)
+   else
+    XL=XL+(bx(i)*ic(i)-ic_current*DLOGSEBX)
+   endif
+   do j=1,ipges
+     FD(J)=FD(J)+(xges(i,J)*ic(i)-ic_current*XEBX(J)/SEBX)*score_weights(i,j)                           
+     do k=1,ipges
+       SDa(J,K)=SDA(J,K)-ic_current*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*dsqrt(score_weights(i,j))*dsqrt(score_weights(i,k))
+       if (ilastlike .eq.1) then
+        SDb(J,K)=SDB(J,K)-ic_current*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*(score_weights(i,j)*score_weights(i,k))
+       endif
+     end do
+   end do
+  end do
+ 
+ 
+ 
+ end if
+ 
  wk=-sda
  EPS=.000000000001D0
  ifail=0
