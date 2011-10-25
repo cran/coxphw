@@ -2,49 +2,49 @@
 \alias{coxphw}
 \title{Weighted estimation in Cox regression}
 \description{
-             This package implements weighted estimation in Cox regression, as proposed by Schemper (1992) and
-             Sasieni (1993). Weighted estimation provides unbiased average hazard ratio estimates in case of
-             non-proportional hazards (Schemper, Wakounig and Heinze (2009)).
+             This package implements weighted estimation in Cox regression, as proposed by Schemper, Wakounig and Heinze (2009).
+             Weighted estimation provides unbiased average hazard ratio estimates in case of non-proportional hazards.
+             An experimental feature allows the estimation of nonlinear effects using fractional polynomials. This feature can also be used
+             to estimate the interaction of a covariate with a nonlinear function of survival time.
 }
-\usage{coxphw(formula, 
- data=parent.frame(),
- breslow=NA, 
- prentice=NA, 
- taroneware=NA, 
- id=NULL,
- robust=FALSE,
- jack=FALSE,
- normalize=TRUE,
- scale.weights=1,
- offset=NULL,
- alpha=0.05,
- maxit=50,
- maxhs=5, 
- epsilon=1e-6, 
- maxstep=2.5, 
- censcorr=FALSE,
- x=TRUE,
- trunc.weights=1,
- \dots)
+\usage{
+coxphw( formula=attr(data, "formula"), data=sys.parent(), breslow=NA,
+ prentice=NA, taroneware=NA, id=NULL, robust=FALSE,
+ jack=FALSE, normalize=TRUE, scale.weights=1, offset=NULL, 
+ alpha=0.05, alpha.fp=c(0.2, 0.05, 0.05), fp.iter=10, fp.max=2, maxit=200,
+ maxhs=5, xconv=1e-4, gconv=1e-4, maxstep=1, x=TRUE, y=TRUE,  
+ censcorr=FALSE, trunc.weights=1, round.times.to=0.00001, add.constant=0,
+ print=TRUE, sorted=FALSE, AHR=TRUE, ARE=FALSE, PH=FALSE, AHR.norobust=FALSE, pc=TRUE, pc.time=TRUE,\dots)     
 }
 \arguments{
   \item{formula}{a formula object, with the response on the left of the  operator, and the
     model terms on the right. The response must be a survival object as returned by the 'Surv' function.
+    \code{formula} may include \code{fp()}-terms (see section on fractional polynomials).
     }
-  \item{data}{a data.frame in which to interpret the variables named in the 'formula' argument. }
-  \item{breslow}{a righthand formula with the terms which should be estimated using Breslow (N at risk) weights}
-  \item{prentice}{a righthand formula with the terms which should be estimated using Prentice (survival function) weights}
-  \item{taroneware}{a righthand formula with the terms which should be estimated using Tarone-Ware (square of N at risk) weights}
-  \item{normalize}{if T, weights are normalized such that their sum is equal to the number of events. May speed up or enable convergence if for some variables no weighting is used.}
+  \item{data}{a data.frame in which to interpret the variables named in the \code{formula} argument. }
+  \item{prentice}{a righthand formula (e. g., ~A+B) with the terms which should be estimated using Prentice (survival function) weights,
+   or use prentice=TRUE to apply these weights to all model terms}
+  \item{breslow}{a righthand formula with the terms which should be estimated using Breslow (N at risk) weights, or TRUE}
+  \item{taroneware}{a righthand formula with the terms which should be estimated using Tarone-Ware (square root of N at risk) weights, or TRUE. 
+     Note that specifications in prentice overrule breslow, and breslow overrules taroneware.}
+  \item{alpha.fp}{A vector of length 2 which specifies p-values to include an \code{fp()}-term: \code{alpha.fp[1]} defines the threshold p-value
+    for keeping at least the linear term in the model, \code{alpha.fp[2]} defines the threshold p-value for the nonlinear term. Default is \code{c(0.20, 0.05, 0.05)}.}
+  \item{fp.iter}{Number of iterations for big fp-loop, default=10. This is important if several \code{fp()}-terms 
+    are included in the model as inclusion or exclusion of one term based on the threshold p-value 
+    may increase or decrease the significance of others.}
+  \item{fp.max}{Highest power of fp( ) terms (applies to all fp-terms). Select 1 or 2 (default=2).}
+  \item{normalize}{if TRUE, weights are normalized such that their sum is equal to the number of events. May speed up or enable convergence if for some variables no weighting is used.}
   \item{alpha}{the significance level (1-\eqn{\alpha} = the confidence level), 0.05 as default.}
-  \item{maxit}{maximum number of iterations (default value is 50)}
+  \item{maxit}{maximum number of iterations (default value is 200)}
   \item{maxhs}{maximum number of step-halvings per iterations (default value is 5). 
      The increments of the parameter vector in one Newton-Rhaphson iteration step are halved, 
      unless the new likelihood is greater than the old one, maximally doing \code{maxhs} halvings.}
-  \item{epsilon}{specifies the maximum allowed change in penalized log likelihood to
-    declare convergence. Default value is 0.0001.}
+  \item{xconv}{specifies the maximum allowed change in standardized parameter estimates to declare convergence. Default value is 0.0001.}
+  \item{gconv}{specifies the maximum allowed change in score function to declare convergence. Default value is 0.0001.}
   \item{maxstep}{specifies the maximum change of (standardized) parameter values allowed
-    in one iteration. Default value is 2.5.}
+    in one iteration. Default value is 1.}
+  \item{x}{requests copying explanatory variables into output object}
+  \item{y}{requests copying survival information into output object}
   \item{id}{a vector of patient identification numbers, must be integers starting from 1. These IDs are used for computing the 
     robust covariance matrix. If id=NA (the default) the program assumes that each line of the data set refers to a distinct individual.}
   \item{robust}{set to TRUE if the robust variance estimate should be computed. This robust estimate is computed from V=D'D where D is the matrix
@@ -54,11 +54,21 @@
    variable specified in id) is left out in turn. The resulting matrix of dfbeta residuals D is then used to compute the variance matrix: V=D'D.}
    \item{offset}{specifies a variable which is included in the model but its parameter estimate is fixed at 1.}
    \item{scale.weights}{specifies a scaling factor for the weights}
+   \item{trunc.weights}{specifies a quantile at which the weights are to be truncated. Can be used to increase the precision of the estimates,
+         particularly if \code{censcorr=TRUE} is used. Default=1 (no truncation). Recommended value is 0.95 for mild truncation.}
    \item{censcorr}{If set to TRUE, the weights are multiplied by the inverse marginal Kaplan-Meier estimator with reverse status indicator (default=F).}
-   \item{x}{If set to TRUE, adds the model matrix to the output object.}
-   \item{trunc.weights}{Specifies quantile for weight truncation (default=1=no truncation). Weight truncation (restricting the weight values to
-   some maximum value) may improve efficiency of estimates. Use values of 0.99 for slight truncation, 0.95 for stronger truncation.}
-   \item{\dots}{additional parameters}
+   \item{AHR}{If set to TRUE, applies a template for average hazard ratio estimation (Schemper, Wakounig and Heinze, 2009): it sets prentice=TRUE, censcorr=TRUE, robust=TRUE}
+   \item{AHR.norobust}{If set to TRUE, applies a template for average hazard ratio estimation but with the Lin-Sasieni covariance: it sets prentice=TRUE, censcorr=TRUE, robust=FALSE}
+   \item{ARE}{If set to TRUE, applies a template for average regression effect estimation (Xu and O'Quigley, 2000): it sets prentice=NA, breslow=NA, taroneware=NA, censcorr=TRUE, robust=TRUE}
+   \item{PH}{If set to TRUE, applies a template for proportional hazards regression (similar to coxph): it sets prentice=NA, breslow=NA, taroneware=NA, censcorr=FALSE, robust=TRUE}
+   \item{round.times.to}{rounds survival times to the nearest number that is a multiple of \code{round.times.to}. May improve numerical stability if very low survival times are used (mostly in simulations).}
+   \item{add.constant}{this number will be added to stop times, and \code{add.constant}/2 will be added to start times}
+   \item{pc}{if set to TRUE, will transform model matrix to speed up convergence during fp mode. default=TRUE.}
+   \item{pc.time}{if set to TRUE, will transform the time dependent covariates (interactions of covariates with functions of time)
+           to speed up convergence. default=TRUE.}
+   \item{print}{requests echoing of intermediate results (particularly, for fp estimation)}
+   \item{sorted}{if set to TRUE, the data set will not be sorted prior to passing it to FORTRAN. May speed up computations.}
+   \item{\dots}{additional arguments, e.g., \code{km} can be used as synonym of \code{prentice}, or \code{N} for \code{breslow}}
 }
 \details{
        If Cox's proportional hazards regression model is used in the presence of non-proportional hazards, 
@@ -72,42 +82,30 @@ of outlying survival times on parameter estimates. Schemper (1992) first demonst
 WCR for estimating average hazard ratios when hazards are non-proportional and Sasieni (1993) extensively 
 investigated the favorable properties of WCR.
 
-Weighted estimation assigns weights to risk sets, according to the number of subjects at risk (Breslow weights), according to their 
-square roots (Tarone-Ware weights) or according to the survival function estimates (Prentice weights). These
+Weighted estimation assigns weights to risk sets, according to the survival function estimates (Prentice weights), the number of subjects at risk (Breslow weights), or according to their 
+square roots (Tarone-Ware weights). These
 weights are applied to the summands of the score function. The final estimate is the vector of parameter values which
 equates the score function to 0. Since there is one score function corresponding to each parameter
 of the model, weights may be applied to some but not necessarily to all parameters of a model.    
 
 Breslow's tie-handling method is used by the program, other methods to handle ties are currently not available.
 
-By default, the program estimates the covariance matrix using Lin (1991) and Sasieni (1993) sandwich estimate \eqn{A^{-1}BA^{-1}} with \eqn{-A} and \eqn{-B} 
-denoting the sum of contributions to the second derivative of the log likelihood, weighted by \eqn{w(t_j)} and \eqn{w(t_j)^2}, respectively. 
-This estimate is independent from the scaling of the weights and reduces to the inverse of the information matrix in case of no weighting. 
+By default, the program estimates the covariance matrix using Lin (1991) and Sasieni (1993) sandwich estimate \eqn{A^{-1}BA^{-1}} with \eqn{-A} and \eqn{-B} denoting the sum of contriubtions 
+to the second derivative of the log likelihood, weighted by \eqn{w(t_j)} and \eqn{w(t_j)^2}, respectively. This estimate is independent from
+the scaling of the weights and reduces to the inverse of the information matrix in case of no weighting. 
 
-In case of censoring Schemper, Wakounig and Heinze (2009) proposed to multiply the weights by a correction which particularly upweights late risk sets by the
-inverse "follow-up" Kaplan-Meier estimate. Using this correction and Prentice weighting one obtains an average hazard ratio which is 
-a consistent estimator of the odds of concordance: \eqn{Pr(T_1>T_0)/Pr(T_1<T_0)}, where \eqn{T_1} and \eqn{T_0} are the survival times of two randomly 
-drawn subjects that differ in the indepependent variable by one unit. The weighting by the number of subjects at risk (Breslow weights)
-might be preferred if robust estimation is desired. In case of mixed weighting (weights only used for model terms that exhibit non-proportional
-hazards), the jackknife estimate of the variance should be used. Therefore, we recommend the following settings:
-
-Estimation of a representative average hazard ratio if there are censored survival times:
-
- \code{   prentice=~<all model terms>, censcorr=T, robust=T}. 
-
-Robust estimation: 
-
-\code{   breslow=~<all model terms>, censcorr=F, robust=T}.
-
-Mixed weighting (proportional hazards assumed for some but not all model terms): 
-
-\code{   prentice=~<non-ph terms>, censcorr=T, jack=T}.
+As an experimental feature, the RA-2 algorithm of Royston and Altman (1994) (cf. also Royston and Sauerbrei, 2008) 
+to select \emph{fractional polynomial} transformations for continuous variables
+was implemented. This allows to obtain for flexible nonlinear estimation. 
+The method can also be applied to survival time in a time by covariate interaction.  
+For some examples see the documentation of the \code{plotfp} function.
     }
 \value{
  \item{coefficients}{the parameter estimates}
  \item{alpha}{the significance level = 1 - confidence level}
  \item{var}{the estimated covariance matrix}
  \item{df}{the degrees of freedom}
+ \item{loglik}{the null and maximimized (penalized) log likelihood}
  \item{method.ties}{the ties handling method}
  \item{iter}{the number of iterations needed to converge}
  \item{n}{the number of observations}
@@ -121,12 +119,6 @@ Mixed weighting (proportional hazards assumed for some but not all model terms):
  \item{ci.upper}{the upper confidence limits}
  \item{prob}{the p-values}
  \item{call}{the function call}
- \item{dfbeta.resid}{the dfbeta residuals \eqn{D}, only computed if robust=T, or if jack=T. For jack=T, the dfbeta residuals are the change in 
- parameter estimates if each individual in turn is left out. For robust=T, the dfbeta residuals are computed
-  via \eqn{UA^{-1}} with \eqn{U} and \eqn{A} denoting the matrix of score residuals and minus the weighted sum of 
-  contributions to the second
-  derivative of the likelihood. If jack=T   or robust=T, the covariance matrix
-  of the parameter estimates is based on \eqn{D'D}.}
  \item{cov.ls}{the covariance matrix computed by the Lin-Sasieni method (the default method)}
  \item{cov.lw}{the covariance matrix computed by the Lin-Wei method (robust covariance, only computed if robust==T)}
  \item{cov.j}{the covariance matrix computed by the jackknife method (only computed if jack==T)}
@@ -135,28 +127,34 @@ Mixed weighting (proportional hazards assumed for some but not all model terms):
  \item{w.matrix}{A matrix with 4 columns and rows according to the number of uncensored failure times. The first column contains the failure times,
   the remaining columns (labeled w.raw, w.obskm, and w) contain the raw weights, the weights according to the inverse of the Kaplan-Meier estimates 
   with reverse status indicator and the normalized product of both.}
+ \item{dataline}{The first dataline of the input data set (needed for \code{plotfp} function)}
 }
 \references{
 Lin D and Wei L (1989). The robust inference for the Cox proportional hazards model. \emph{Journal of the American Statistical Association} 84, 1074-1078.
 
 Lin D (1991). Goodness-of-fit analysis for the Cox regression model based on a class of parameter estimators. \emph{Journal of the American Statistical Association} 86, 725-728.
 
-Schemper M (1992).  Cox analysis of survival data with non-proportional hazard functions. \emph{The Statistician} 41, 455-465.
+Royston P and Altman D (1994). Regression Using Fractional Polynomials of Continuous Covariates: Parsimonious Parametric Modelling. \emph{Applied Statistics} 43, 429-467.
+
+Royston P and Sauerbrei W (2008). \emph{Multivariable Model-building. A pragmatic approach to regression analysis based on fractional polynomials
+  for modelling continuous variables.} Wiley, Chichester, UK.
 
 Sasieni P (1993). Maximum Weighted Partial Likelihood Estimators for the Cox Model. \emph{Journal of the American Statistical Association} 88, 144-152.
 
-Schemper M, Wakounig S and Heinze G (2009). The estimation of average hazard ratios by weighted Cox regression. \emph{Statistics in Medicine, accepted. DOI:10.1002/sim.3623}.
+Schemper M (1992).  Cox analysis of survival data with non-proportional hazard functions. \emph{The Statistician} 41, 455-465.
+
+Schemper M, Wakounig S and Heinze G (2009). The estimation of average hazard ratios by weighted Cox regression. \emph{Statistics in Medicine} 28, 2473-2489.
+
+Xu R and O'Quigley J (2000). Estimating average regression effect under non-proportional hazards. \emph{Biostatistics} 1, 423-439.
 }
 \author{Georg Heinze and Meinhard Ploner}
 \note{
-A SAS macro WCM with similar functionality is offered for download at:
-
- \url{http://www.meduniwien.ac.at/msi/biometrie}
+A SAS macro WCM with similar functionality (but without fp options) is offered for download at \url{http://www.meduniwien.ac.at/cemsiis/kb/}
 }
 \seealso{coxph}
 \examples{
 # gastric cancer data set
-`gastric` <-
+gastric <-
   structure(list(patnr = as.integer(c(46, 1, 2, 3, 4, 5, 47, 6,
                    7, 8, 9, 48, 10, 11, 49, 12, 13, 14, 50, 15, 16, 17, 18, 19,
                    20, 51, 21, 22, 52, 23, 53, 54, 55, 24, 25, 56, 57, 58, 59, 60,
@@ -198,26 +196,24 @@ A SAS macro WCM with similar functionality is offered for download at:
   
 
 
-# weighted estimation, prentice (survival curve, Kaplan-Meier) weights
+# weighted estimation of average hazard ratio
   
-fit2<-coxphw(data=gastric, Surv(time,status)~treat, prentice= ~treat, robust=TRUE, censcorr=TRUE)
-# equivalent: fit2<-coxphw(data=gastric, Surv(time,status)~treat, km= ~treat)
+fit2<-coxphw(data=gastric, Surv(time,status)~treat, AHR=TRUE)
+# equivalent: fit2<-coxphw(data=gastric, Surv(time,status)~treat)
 
 summary(fit2)
-fit2$cov.lw
-fit2$cov.ls
-fit2$cov.j
-plotw(fit2)
+fit2$cov.lw     # robust covariance
+fit2$cov.ls     # Lin-Sasieni covariance
 
-# weighted estimation, breslow (N at risk) weights                  
+# unweighted estimation, include interaction with years ('treat' must be included in formula!) 
 
-fit3<-coxphw(data=gastric, Surv(time,status)~treat, breslow= ~treat)
-# equivalent: fit2<-coxphw(data=gastric, Surv(time,status)~treat, km= ~treat)
-
+gastric$years<-gastric$time/365.25
+fit3<-coxphw(data=gastric, Surv(time,status)~treat+years:treat, PH=TRUE)
 summary(fit3)
-fit3$cov.lw
-fit3$cov.ls
-fit3$cov.j
+
+# select best fp(1) for interaction with time using RA2 algorithm (don't include 'treat' in formula if using fp(time)!!)
+fit4<-coxphw(data=gastric, Surv(time,status)~fp(time):treat, alpha.fp=c(1,0.05,0.05), fp.max=1, AHR=FALSE, robust=FALSE)
+summary(fit4)
 
 
 }

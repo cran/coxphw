@@ -1,5 +1,5 @@
-SUBROUTINE WEIGHTEDCOX(cards, parms, IOARRAY)
-!DEC$ ATTRIBUTES DLLEXPORT :: WEIGHTEDCOX
+SUBROUTINE WEIGHTEDCOX(cards, parms, IOARRAY, DFBETA)
+!DEC$ ATTRIBUTES DLLEXPORT :: weightedcox
 
 IMPLICIT DOUBLE PRECISION (A-H,O-Z)  
 
@@ -9,11 +9,11 @@ IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 
 real*8, dimension (16) :: parms
 integer N, IP,JCODE,Irobust,ISEP,ITER,IMAXIT,IMAXHS,Ioffset
-real*8, dimension (int(parms(1))) :: BX, T1, t2, TMSF, Doffset
+real*8, dimension (int(parms(1))) :: BX, T1, t2, TMSF, Doffset, doffset2
 real*8, dimension (int(parms(1)),int(parms(2))) :: X, XMSF
 !real*8, dimension (int(parms(1)),int(parms(2))) :: X, XMSF, bresx
-real*8, dimension (int(parms(2)+parms(14))) :: B, B0, FD, TDERR,BMSF,zw1, xx, yy, dinit 
-real*8, dimension (int(parms(2)+parms(14)),int(parms(2)+parms(14))) :: SD, VM, vmlw, vmls, WK, fish, ainv
+real*8, dimension (int(parms(2)+parms(14))) :: B, B0, FD, TDERR,BMSF,zw1, xx, xfd, yy, dinit 
+real*8, dimension (int(parms(2)+parms(14)),int(parms(2)+parms(14))) :: SD, VM, vmlw, vmls, WK, fish, ainv, vminv
 !integer, dimension (int(parms(1))) :: ibresc, IC, ICMSF, patid
 integer, dimension (int(parms(1))) :: IC, ICMSF, patid
 integer, dimension (int(parms(2)+parms(14))) :: IFLAG
@@ -43,17 +43,18 @@ imaxit=Parms(4)
 imaxhs=parms(5)
 step=parms(6)
 xconv=parms(7)
-
-patid=int(cards(:,int((2*parms(2)+4+2*(parms(14))))))
+gconv=parms(8)
 
 ngv=parms(13)
 ntde=parms(14)
-numbpatients=parms(15)
-ioffset=parms(16)
+numbpatients=int(parms(15))
+ioffset=int(parms(16))
+patid=int(cards(:,int(ioffset+(2*parms(2)+4+2*(parms(14))))))
 
 parms(10)=-11
 
 ilastlike=0
+!ilastlike=1   ! would always compute correct variance (lin-sasieni), but needs more iterations
 
 dinit=ioarray(2,:)
 iflag=ioarray(1,:)
@@ -68,6 +69,7 @@ Doffset = 0.
 if (ioffset .eq. 1) then
  Doffset = cards(:,1)
 end if
+doffset2 = doffset
  
 if (ntde .gt. 0) then 
 ! do j=1,ntde
@@ -143,10 +145,11 @@ do while((iconv .eq. 0) .and. (iter .lt. imaxit))
  iter=iter+1
  b0(:)=b(:)
  XL0=XL
+ FD_sumabs0=sum(abs(fd))
  parms(10)=-10
 ! write(6,*) "Vor 1. LIKE", b
  if (iter .eq. 1) then
-  CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE,ngv,score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv)
+  CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE,ngv,score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, vminv)
  end if
 ! write(6,*) "Nach 1. LIKE"
 
@@ -186,20 +189,23 @@ do while((iconv .eq. 0) .and. (iter .lt. imaxit))
    ICONV=0
    IHS=0
 
-   CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv)
-   do while(((XL .le. XL0) .AND. (ITER.ne.1)) .AND. (ihs .le. imaxhs) .and. ((ngv .EQ. IP+ntde) .OR. (ngv .EQ. 0))) 
+   CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, vminv)
+   FD_sumabs=sum(abs(FD))
+   do while(((FD_sumabs .gt. FD_sumabs0) .AND. (ITER.ne.1)) .AND. (ihs .le. imaxhs) .and. ((ngv .EQ. IP+ntde) .OR. (ngv .EQ. 0))) 
     IHS=IHS+1
     where (iflag .eq. 1)
      b=(b+b0)/2
     end where
-    CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv)
+    CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, vminv)
    end do
   end if
  end if
  ICONV=1
  if (isflag .gt. 0) then
-  XX=dabs(B-B0)                                                   
+  XX=dabs(B-B0)     
+  XFD=dabs(fd)                                              
   IF(any(XX.GT.xconv)) ICONV=0
+  if(any(xfd .gt. gconv)) iconv=0
  end if
 end do
 
@@ -212,7 +218,7 @@ end do
 
 !CALL INVERT(WK,IP+ntde,IP+ntde,VM,IP+ntde,EPS,IFAIL)       
 ilastlike=1
-CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv)
+CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, vminv)
 
 vmls=vm
 wk=vmls
@@ -224,7 +230,8 @@ do j=1,ip+ntde
  end do
 
 if (irobust .eq. 1 .or. irobust .eq. 3) then   ! Lin-Wei-Varianz
- CALL dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,ainv,dfbeta,doffset)
+ CALL dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,ainv,dfbeta,doffset,sumabsoff)
+! CALL dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,sumabsoff)
  vmlw=matmul(transpose(dfbeta),dfbeta)
  do j=1,ip+ntde
   do j2=1,ip+ntde
@@ -243,7 +250,6 @@ if (irobust .ge. 2) then   ! Jackknife-Varianz
  end do
  wk=vm
 end if
-
 
 
 CALL INVERT(WK,IP+ntde,IP+ntde,fish,IP+ntde,EPS,IFAIL)       
@@ -273,12 +279,14 @@ zw=0.
 zw1=matmul(fish, b)
 zw=dot_product(b,zw1)
 parms(9)=zw
-
+parms(7)=sum(abs(FD))
 parms(8)=jcode
 parms(11)=xl
 parms(10)=iter
-
-cards(1:numbpatients, 1:(ip+ntde)) = dfbeta
+parms(16)=sumabsoff
+cards(:,1)=doffset
+DFBETA = dfbeta
+!cards((1:numbpatients), (1:(ip+ntde))) = dfbeta(:)
 
 !close(unit=6)
 
@@ -360,12 +368,11 @@ function deter(ain, IA, n)
  return
 end function deter
 
-
-SUBROUTINE LIKE(N,IP,X,T1,t2,IC,XL,FD,VM,B,JCODE, ngv, score_weights, ntde,ft, ftmap,ilastlike,offset,ainv) 
+SUBROUTINE LIKE(N,IP,X,T1,t2,IC,XL,FD,VM,B,JCODE, ngv, score_weights, ntde,ft, ftmap,ilastlike,offset,ainv,vminv) 
 !DEC$ ATTRIBUTES DLLEXPORT :: like
 
  IMPLICIT DOUBLE PRECISION (A-H,O-Z)
- real*8, dimension (IP+ntde,IP+ntde) :: DINFO, DINFOI, SDa, sdb, SDI, WK, help, vm, ainv
+ real*8, dimension (IP+ntde,IP+ntde) :: DINFO, DINFOI, SDa, sdb, SDI, WK, help, vm, ainv, vminv
  real*8, dimension (IP+ntde,IP+ntde,IP+ntde) :: dabl
  real*8 SEBX, zeitp
  real*8, dimension (IP+ntde) :: XEBX
@@ -560,6 +567,7 @@ if (ifastmode .eqv. .false.) then
  end if
  
  wk=-sda
+ vminv=wk
  EPS=.000000000001D0
  ifail=0
  CALL INVERT(WK,ipges,Ipges,ainv,Ipges,EPS,IFAIL)
@@ -577,7 +585,7 @@ if (ifastmode .eqv. .false.) then
  RETURN
 END 
 
-subroutine dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,offset)
+subroutine dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,doffset,sumabsoff)
 
  IMPLICIT DOUBLE PRECISION (A-H,O-Z)
  real*8, dimension (IP+ntde,IP+ntde) :: DINFO, DINFOI, SD, SDI, WK, help, vm
@@ -589,7 +597,7 @@ subroutine dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftma
  real*8, dimension (IP+ntde,IP+ntde) :: XXEBX
 ! real*8, dimension (N+1, IP, Ip, IP) :: XXXEBX
  real*8, dimension (IP+ntde) :: FD, B, h1, h2, h3
- real*8, dimension (N) :: EBX, BX, T1, t2, WKS, hh0, hh1, hh2, offset
+ real*8, dimension (N) :: EBX, BX, T1, t2, WKS, hh0, hh1, hh2, doffset
  !integer, dimension (N) :: IC,ibresc
  !real*8, dimension (N,IP) :: X, bresx
  integer, dimension (N) :: IC
@@ -602,7 +610,7 @@ subroutine dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftma
  integer, dimension (ntde+1) :: ftmap
  real*8, dimension (numbpatients,ip+ntde) :: dfbeta
 
- intrinsic dexp 
+ intrinsic dexp, dabs 
 
  dlowest=0.000000001
  XL=0.
@@ -617,12 +625,18 @@ subroutine dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftma
  ! brauchen sebx(i), xebx(i,k)
 sebx(:)=0.
 xebx(:,:)=0.
+!doffset=0.
+sumabsoff=sum(dabs(doffset))
+if (sumabsoff .lt. 0.0001) then
+ doffset=0.
+end if
+!doffset=0.
 
 do i=1, N
  if (ic(i) .ne. 0) then  
   zeitp=t2(i)-0.00001
-  where ((t1 .lt. zeitp) .and. (t2.ge. zeitp) .and. (patid .ne. ipatient))
-!   where ((t1 .lt. zeitp) .and. (t2.ge. zeitp))
+!  where ((t1 .lt. zeitp) .and. (t2.ge. zeitp) .and. (patid .ne. ipatient))   ! corr GH 100702, ipatient gibts hier noch nicht
+   where ((t1 .lt. zeitp) .and. (t2.ge. zeitp))
    maske=.true. 
   elsewhere
    maske=.false.
@@ -634,8 +648,9 @@ do i=1, N
     end do
    end if
 
-   bx=matmul(xges,b)+offset
-   ebx=dexp(bx)
+   bx=matmul(xges,b)
+   bx(:)=bx(:)+doffset(:)
+   ebx(:)=dexp(bx(:))
 
    where (maske .eqv. .false.)
     bx=0.
@@ -667,7 +682,10 @@ do i=1,n
    if (ntde .gt. 0) then
     xges(i,(ip+1):(ip+ntde))=x(i,ftmap(1:ntde))*ft(ih,1:ntde)
    end if
-   u_work(i,:)=u_work(i,:)-score_weights(ih,:)*exp(dot_product(xges(i,:),b)+offset)/sebx(ih)*(xges(i,:)-xebx(ih,:)/sebx(ih))
+   bxi=dot_product(xges(i,:),b)
+   bxi=bxi+doffset(i)
+   u_work(i,:)=u_work(i,:)-score_weights(ih,:)*dexp(bxi)/sebx(ih)*(xges(i,:)-xebx(ih,:)/sebx(ih)) !corr. 091008 offset(i)
+!   u_work(i,:)=u_work(i,:)-score_weights(ih,:)*exp(dot_product(xges(i,:),b))/sebx(ih)*(xges(i,:)-xebx(ih,:)/sebx(ih)) !corr. 091008 offset(i)
   end if
  end do
 
@@ -684,6 +702,9 @@ do ipatient=1,numbpatients
  end do
 end do
 dfbeta=matmul(dfbeta,vm)
+sumabsoff=sum(dabs(doffset))
+!sumabsoff=numbpatients   !checked, numbpatients is ok
+
 RETURN
 end                                                            
 
