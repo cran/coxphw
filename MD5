@@ -1,7 +1,7 @@
-60167e1d0bf5ba80fb42533bdc3eba44 *DESCRIPTION
+fe9d73e4bded581dab780404b3933b9e *DESCRIPTION
 87df38d5bba187b039d2f98c031c4f57 *NAMESPACE
-70bb164bb30a2c69449993fb36e17ec9 *R/coxphw.fit.R
-69e578a76d848b835375539e8ff1864e *R/coxphw.r
+461bdde7a8091dd9892846a5d5437efa *R/coxphw.fit.R
+ce7a3c6da39046bfd8f12035458d0729 *R/coxphw.r
 4410944d513885d840020f8a45fe8ac8 *R/coxphw.wei.R
 93a3c944ea3107325bee2f0076991f53 *R/decomposeSurv.R
 edc6c81922872a097873aab41f535dc7 *R/fp.scale.R
@@ -26,4 +26,4 @@ cca577a4a37c56496063e31addfc84ae *man/pow2.rd
 c9b8b9668752977fe3c2df29df5baaa5 *man/powM0.5.rd
 685dc8ed621f84a5f34b8cb345d41752 *man/powM1.rd
 e44436a46a9d8af89b9e741c2f8c021b *man/powM2.rd
-bea6fce1b43390b39298beb97bf445fa *src/coxphw.f90
+d455245351a6ff98672ff849d4b455b8 *src/coxphw.f90

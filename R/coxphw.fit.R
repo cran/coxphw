@@ -79,7 +79,7 @@ coxphw.fit <- function
                           outpar = PARMS,
                           outtab = IOARRAY,
                           dfbetaresid = DFBETA,
-                          PACKAGE=coxphw)
+                          PACKAGE="coxphw")
         if(value$outpar[8])
           warning("Error in Fortran routine weightedox; parms8 <> 0")
   #      std.cov<-matrix(value$outtab[4:(k2+3), ], ncol=k2) / ZxZ

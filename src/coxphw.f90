@@ -1075,7 +1075,7 @@ h = la - n
 IF ( h == 0 ) RETURN
 IF ( h > 0 ) GO TO 10
 ! WRITE(6,*) 'ERROR: LA ARGUMENT IN PACK MUST BE .GE. N ARGUMENT'
-STOP
+GO TO 30
 10    i = 0
 k = 1
 l = n
@@ -1088,6 +1088,7 @@ DO  j = k,l
   a(j) = a(i+j)
 END DO
 GO TO 20
+30  CONTINUE
 END SUBROUTINE packna
 
 
@@ -1200,5 +1201,5 @@ v(1,1) = 1./v(1,1)
 RETURN
 120   continue
 !WRITE(6,*) 'ERROR: MATRIX HAS NO INVERSE'
-STOP
+!STOP
 END SUBROUTINE vert

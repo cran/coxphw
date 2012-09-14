@@ -2,7 +2,7 @@
   library.dynam("coxphw", pkg, lib)
 
 
-`coxphw` <- function
+coxphw <- function
 (
  formula=attr(data, "formula"), # formula, may contain time-interactions
  data=sys.parent(),                     #
@@ -451,7 +451,7 @@
         fit
 }
 
-"plotw" <- function
+plotw <- function
 (
  x,    # object of class coxphw
  rank=FALSE,
@@ -483,7 +483,7 @@
  }
  
 
-"print.coxphw" <- function
+print.coxphw <- function
 (
   x,     # object of class coxphw
   ...            # dummy
@@ -513,7 +513,7 @@
 }
 
 
-"summary.coxphw" <- function
+summary.coxphw <- function
 (
  object,              # object of class coxphf
  ...                  # dummy
