@@ -70,7 +70,8 @@ fit2<-coxphw(data=gastric, Surv(time,status)~treat, AHR=TRUE)
 plotw(fit2)
 
 
-# estimation of average regression effect by inverse probability of censoring weights; truncate weights at 95th percentile
+# estimation of average regression effect by inverse probability of censoring weights;
+# truncate weights at 95th percentile
 
 fit2<-coxphw(data=gastric, Surv(time,status)~treat, ARE=TRUE, trunc.weights=0.95)
 plotw(fit2)

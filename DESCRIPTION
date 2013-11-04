@@ -1,13 +1,14 @@
 Package: coxphw
 Type: Package
 Title: Weighted Cox regression
-Version: 2.12
-Date: 2012-09-14
+Version: 2.13
+Date: 2013-11-04
 Author: R by Meinhard Ploner, Fortran by Georg Heinze
-Maintainer: <georg.heinze@meduniwien.ac.at>
-Depends: R (>= 2.15.1), survival
+Maintainer: Georg Heinze <georg.heinze@meduniwien.ac.at>
+Depends: R (>= 3.0.0), survival
 Description: Weighted estimation for Cox regression
 License: GPL
-Packaged: 2012-09-14 08:48:59 UTC; Georg
+Packaged: 2013-11-04 14:47:14 UTC; Georg
+NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2012-09-14 10:04:57
+Date/Publication: 2013-11-04 17:51:25

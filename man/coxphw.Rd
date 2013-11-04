@@ -14,7 +14,8 @@ coxphw( formula=attr(data, "formula"), data=sys.parent(), breslow=NA,
  alpha=0.05, alpha.fp=c(0.2, 0.05, 0.05), fp.iter=10, fp.max=2, maxit=200,
  maxhs=5, xconv=1e-4, gconv=1e-4, maxstep=1, x=TRUE, y=TRUE,  
  censcorr=FALSE, trunc.weights=1, round.times.to=0.00001, add.constant=0,
- print=TRUE, sorted=FALSE, AHR=TRUE, ARE=FALSE, PH=FALSE, AHR.norobust=FALSE, pc=TRUE, pc.time=TRUE,\dots)     
+ print=TRUE, sorted=FALSE, AHR=TRUE, ARE=FALSE, PH=FALSE, AHR.norobust=FALSE,
+ pc=TRUE, pc.time=TRUE,\dots)     
 }
 \arguments{
   \item{formula}{a formula object, with the response on the left of the  operator, and the
@@ -205,14 +206,17 @@ summary(fit2)
 fit2$cov.lw     # robust covariance
 fit2$cov.ls     # Lin-Sasieni covariance
 
-# unweighted estimation, include interaction with years ('treat' must be included in formula!) 
+# unweighted estimation, include interaction with years ('treat' must be included
+# in formula!) 
 
 gastric$years<-gastric$time/365.25
 fit3<-coxphw(data=gastric, Surv(time,status)~treat+years:treat, PH=TRUE)
 summary(fit3)
 
-# select best fp(1) for interaction with time using RA2 algorithm (don't include 'treat' in formula if using fp(time)!!)
-fit4<-coxphw(data=gastric, Surv(time,status)~fp(time):treat, alpha.fp=c(1,0.05,0.05), fp.max=1, AHR=FALSE, robust=FALSE)
+# select best fp(1) for interaction with time using RA2 algorithm (don't include
+# 'treat' in formula if using fp(time)!!)
+fit4<-coxphw(data=gastric, Surv(time,status)~fp(time):treat, 
+             alpha.fp=c(1,0.05,0.05), fp.max=1, AHR=FALSE, robust=FALSE)
 summary(fit4)
 
 

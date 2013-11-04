@@ -6,7 +6,8 @@
              relative hazard versus values of a continuous covariable.
              }
 \usage{
-plotfp(obj, plot.x = NA, ref = NA, plot = TRUE, treatment=NULL, ref.type="value", variable=NULL, xlab=NULL, ylab=NULL, ...)}
+plotfp(obj, plot.x = NA, ref = NA, plot = TRUE, treatment=NULL, ref.type="value",
+       variable=NULL, xlab=NULL, ylab=NULL, ...)}
 \arguments{
   \item{obj}{an output object of \code{coxphw}, which includes \code{fp()} terms}
   \item{plot.x}{The data values for the continuous variable (e. g., plot.x=30:70)}
@@ -56,7 +57,8 @@ y1<-plotfp(fit1, plot.x=10:70, ref=40, variable="x", ref.type="value")
 x<-10:70
 lines(x, true.func(x)-true.func(40))
 lines(x, y1, lty=2)
-legend(x=40, y=(max(true.func(x)-true.func(40))+min(true.func(x)-true.func(40)))/2, lty=c(NA,2,1),pch=c(1,NA,NA),legend=c("AHR estimates","PH estimates", "true"))
+legend(x=40, y=(max(true.func(x)-true.func(40))+min(true.func(x)-true.func(40)))/2,
+       lty=c(NA,2,1),pch=c(1,NA,NA),legend=c("AHR estimates","PH estimates", "true"))
 
 #Example 2
 n<-200
@@ -77,7 +79,8 @@ y<-plotfp(fit,plot.x=10:70, ref=40, ref.type="value", variable="x", type="p")
 # true function
 x<-10:70
 lines(x, true.func(x)-true.func(40))
-legend(x=40, y=(max(true.func(x)-true.func(40))+min(true.func(x)-true.func(40)))/2, lty=c(NA,1),pch=c(1,NA),legend=c("estimates","true"))
+legend(x=40, y=(max(true.func(x)-true.func(40))+min(true.func(x)-true.func(40)))/2,
+       lty=c(NA,1),pch=c(1,NA),legend=c("estimates","true"))
 
 
 #interaction of continuous variable with binary "treatment" variable
@@ -110,13 +113,18 @@ y1<-plotfp(fit,variable="x",treatment="trt",ref.type=1,plot.x=10:70, ref=40)
   my.data<-data.frame(x,trt,time,event)
 
 
-fit<-coxphw(data=my.data, Surv(time,event)~fp(time)*trt+x, alpha.fp=c(1,1,0.05), fp.max=2, AHR=TRUE)
-y<-plotfp(fit,variable="time", treatment="trt", plot.x=seq(1,100,1), ref.type="interaction.time", type="l")
+fit<-coxphw(data=my.data, Surv(time,event)~fp(time)*trt+x, alpha.fp=c(1,1,0.05),
+            fp.max=2, AHR=TRUE)
+y<-plotfp(fit,variable="time", treatment="trt", plot.x=seq(1,100,1),
+          ref.type="interaction.time", type="l")
 
-fit2<-coxphw(data=my.data, Surv(time,event)~fp(time)*trt+x, alpha.fp=c(1,1,0.05), fp.max=2, PH=TRUE)
-y2<-plotfp(fit2,variable="time", treatment="trt", plot.x=seq(1,100,1), ref.type="interaction.time", type="l")
+fit2<-coxphw(data=my.data, Surv(time,event)~fp(time)*trt+x, alpha.fp=c(1,1,0.05),
+             fp.max=2, PH=TRUE)
+y2<-plotfp(fit2,variable="time", treatment="trt", plot.x=seq(1,100,1), 
+           ref.type="interaction.time", type="l")
 
-plot(x=1:100, xlab="time", y=y, ylab="log relative hazard", pch=1, ylim=c(min(y,y2),max(y,y2)))
+plot(x=1:100, xlab="time", y=y, ylab="log relative hazard", pch=1, 
+     ylim=c(min(y,y2),max(y,y2)))
 lines(x=1:100, y=y2, lty=1)
 legend(x=60, y=max(y,y2), lty=c(NA,1), pch=c(1,NA), legend=c("AHR","PH"))
 }

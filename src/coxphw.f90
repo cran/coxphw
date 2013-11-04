@@ -1065,9 +1065,9 @@ END SUBROUTINE fact
 
 SUBROUTINE packna(a,la,n)
 
-REAL*8, INTENT(OUT)                        :: a(1)
 INTEGER, INTENT(IN)                      :: la
 INTEGER, INTENT(IN)                      :: n
+REAL*8, INTENT(OUT)                        :: a(n*n)
 
 INTEGER :: h,i,j,k,l, o
 

@@ -1,7 +1,7 @@
-fe9d73e4bded581dab780404b3933b9e *DESCRIPTION
+e1e523e9e9f9c98002c6d0df814f8567 *DESCRIPTION
 87df38d5bba187b039d2f98c031c4f57 *NAMESPACE
 461bdde7a8091dd9892846a5d5437efa *R/coxphw.fit.R
-ce7a3c6da39046bfd8f12035458d0729 *R/coxphw.r
+3f8535853498f56190a713be0f806525 *R/coxphw.r
 4410944d513885d840020f8a45fe8ac8 *R/coxphw.wei.R
 93a3c944ea3107325bee2f0076991f53 *R/decomposeSurv.R
 edc6c81922872a097873aab41f535dc7 *R/fp.scale.R
@@ -17,13 +17,13 @@ edc6c81922872a097873aab41f535dc7 *R/fp.scale.R
 0723da122c0b5b41e4ce88d4013f7a31 *man/RpowM1.rd
 b2a01be83f8f47479665247220d82ffa *man/RpowM2.rd
 63e26f1dfaed591c84517f0a6d58126c *man/Rsqrt.rd
-23059f9b9ba8765f7776c9bbcd8d824f *man/coxphw.Rd
+f0fa5f3551d5c6ad65505ad0faf64896 *man/coxphw.Rd
 a3026eafe2197cc3f44b3b9f3162374e *man/fp.power.rd
-88b82a7fea1a760f5568ef83b444a97b *man/plotfp.Rd
-9c9ccc92b5334e7ccb92971c3461c096 *man/plotw.rd
+bc63b17f344c52bb3bef814b37dfc131 *man/plotfp.Rd
+ebd4a2ef09ad8d5d7d1884de42520461 *man/plotw.rd
 cca577a4a37c56496063e31addfc84ae *man/pow2.rd
 52c21e932da611764b0e04b9aefcfb43 *man/pow3.rd
 c9b8b9668752977fe3c2df29df5baaa5 *man/powM0.5.rd
 685dc8ed621f84a5f34b8cb345d41752 *man/powM1.rd
 e44436a46a9d8af89b9e741c2f8c021b *man/powM2.rd
-d455245351a6ff98672ff849d4b455b8 *src/coxphw.f90
+ccdb6ec8bf63e56d4276dd5db0ea1756 *src/coxphw.f90

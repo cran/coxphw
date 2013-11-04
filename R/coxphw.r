@@ -1,7 +1,3 @@
-".First.lib" <- function(lib, pkg) 
-  library.dynam("coxphw", pkg, lib)
-
-
 coxphw <- function
 (
  formula=attr(data, "formula"), # formula, may contain time-interactions
@@ -113,6 +109,9 @@ coxphw <- function
         }
         obj.full$resp[, 1] <- obj.full$resp[, 1] + add.constant         ### specify in option! round.times=automatic,or specify value
         obj.full$resp[, 2] <- obj.full$resp[, 2] + 2*add.constant
+        
+        if(any(obj.full$resp[,2]<=0)) stop("Check survival times: all survival times must be strictly greater than 0.\n")
+        if(any(obj.full$resp[,1]>= obj.full$resp[,2])) stop("Check survival times: stop time must be greater than start time.\n")
         
         ## calculate weights ...
         W <- coxphw.wei(formula, data, obj.full,
