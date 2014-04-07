@@ -12,7 +12,7 @@ integer N, IP,JCODE,Irobust,ISEP,ITER,IMAXIT,IMAXHS,Ioffset
 real*8, dimension (int(parms(1))) :: BX, T1, t2, TMSF, Doffset, doffset2
 real*8, dimension (int(parms(1)),int(parms(2))) :: X, XMSF
 !real*8, dimension (int(parms(1)),int(parms(2))) :: X, XMSF, bresx
-real*8, dimension (int(parms(2)+parms(14))) :: B, B0, FD, TDERR,BMSF,zw1, xx, xfd, yy, dinit 
+real*8, dimension (int(parms(2)+parms(14))) :: B, B0, FD, TDERR,BMSF,zw1, xx, xfd, yy, dinit, fdx 
 real*8, dimension (int(parms(2)+parms(14)),int(parms(2)+parms(14))) :: SD, VM, vmlw, vmls, WK, fish, ainv, vminv
 !integer, dimension (int(parms(1))) :: ibresc, IC, ICMSF, patid
 integer, dimension (int(parms(1))) :: IC, ICMSF, patid
@@ -144,13 +144,16 @@ do while((iconv .eq. 0) .and. (iter .lt. imaxit))
 ! write(6,*) iter, b
  iter=iter+1
  b0(:)=b(:)
- XL0=XL
- FD_sumabs0=sum(abs(fd))
- parms(10)=-10
+
+parms(10)=-10
 ! write(6,*) "Vor 1. LIKE", b
  if (iter .eq. 1) then
   CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE,ngv,score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, vminv)
  end if
+
+ XL0=XL
+ FD_sumabs0=sum(abs(fd))
+
 ! write(6,*) "Nach 1. LIKE"
 
  parms(10)=-9
@@ -202,8 +205,12 @@ do while((iconv .eq. 0) .and. (iter .lt. imaxit))
  end if
  ICONV=1
  if (isflag .gt. 0) then
-  XX=dabs(B-B0)     
-  XFD=dabs(fd)                                              
+  XX=dabs(B-B0) 
+  fdx=fd
+  where(iflag .eq. 0) 
+    fdx=0
+  endwhere
+  XFD=dabs(fdx)                                              
   IF(any(XX.GT.xconv)) ICONV=0
   if(any(xfd .gt. gconv)) iconv=0
  end if
@@ -1128,7 +1135,7 @@ REAL*8, INTENT(OUT)                     :: w(N)
 REAL*8 :: s,t
 INTEGER :: i,j,k,l,m, p
 
-!Anm GH bei den Dimensionen die Indizes verändert, waren v(lv,1) und w(1) vorher
+!Anm GH bei den Dimensionen die Indizes ver?ndert, waren v(lv,1) und w(1) vorher
 
 intrinsic dabs
 

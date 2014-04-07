@@ -1,93 +1,147 @@
 coxphw <- function
 (
- formula=attr(data, "formula"), # formula, may contain time-interactions
- data=sys.parent(),                     #
- 
- breslow=NA, # righthand formula, if breslow weighted terms, e.g. ~ A + A:C, or TRUE to weight all model effects
- prentice=NA, # righthand formula, if prentice weighted terms, e.g. ~ A + A:C, or TRUE to weight all model effects
- taroneware=NA, # righthand formula, if tarone-ware weighted terms, e.g. ~ A + A:C, or TRUE to weight all model effects
- id=NULL,                               # identifier: numeric or character or factor
- robust=FALSE,
+ formula=attr(data, "formula"),         # formula, may contain time-interactions
+ data=sys.parent(),                     # data 
+ template=c("AHR", "ARE", "PH"),        # predefined templates
+ robust=TRUE,                           # robust variance (default) 
  jack=FALSE,
- normalize=TRUE,
- scale.weights=1,
- offset=NULL,
+ betafix=NULL,                          # fixate regression coefficients for selected covariables, a vector is required, NA for estimation of respective effect
  
  alpha=0.05,                            # confidence limit
-  alpha.fp=c(0.20, 0.05, 0.05),          # alpha levels: [1] for fp(fp.max) vs. null, [2] for fp(fp.max) vs. linear, [3] for fp(2) vs. fp(1)
+ alpha.fp=c(0.20, 0.05, 0.05),          # alpha levels: [1] for fp(fp.max) vs. null, [2] for fp(fp.max) vs. linear, [3] for fp(2) vs. fp(1)
  fp.iter=10,                            # maximum number of iterations of large <fp> loop
  fp.max=2,                              # highest fp power (choose between 1 or 2)
- maxit=200,                              # max. iterations
+ trunc.weights=1,
+ offset=NULL,
+ maxit=200,                             # max. iterations
  maxhs=5,                               # half steps
  xconv=1e-4,                            # convergence criterion for standardized parameter estimates
  gconv=1e-4,                            # convergence criterion for first derivatives of log likelihood
  maxstep=1,                             #
  x=TRUE,
  y=TRUE, 
- censcorr=FALSE,
- trunc.weights=1,
- round.times.to=0.00001,                 # whether times should be rounded (can be safer with FORTRAN interface), set to 0 for no rounding
- add.constant=0,                  # add 1*add.constant to start times, 2*add.constant to stop times
- 
- print=TRUE,                            # print fitting information on screen
+ round.times.to=0.00001,                # whether times should be rounded (can be safer with FORTRAN interface), set to 0 for no rounding
+ add.constant=0,                        # add 1*add.constant to start times, 2*add.constant to stop times
+ print=FALSE,                           # print fitting information on screen
  sorted=FALSE,                          # if data is sorted by stoptime and -cens
- AHR=TRUE,                              # template to set prentice=TRUE, robust=TRUE, censcorr=TRUE
- ARE=FALSE,                             # template to set prentice=NA, breslow=NA, taroneware=NA, robust=TRUE, censcorr=TRUE
- PH=FALSE,                              # template to set prentice=NA, breslow=NA, taroneware=NA, robust=TRUE, censcorr=FALSE
- AHR.norobust=FALSE,                    #  template to set   prentice=TRUE, robust=FALSE, censcorr=TRUE
  pc=TRUE,                               # transforms data by principal components to speed up convergence when evaluating fp models
  pc.time=TRUE,                          # transforms time variables by principal components to speed up convergence in models
+ id=NULL,                               # identifier: numeric or character or factor
+ normalize=TRUE, 
+ 
+ ### 02-2014: old syntax disabled
+ #scale.weights=1,                      # the only one, that is still on
+ #censcorr=FALSE,
+ #breslow=NA,                           # righthand formula, if breslow weighted terms, e.g. ~ A + A:C, or TRUE to weight all model effects
+ #taroneware=NA,                        # righthand formula, if tarone-ware weighted terms, e.g. ~ A + A:C, or TRUE to weight all model effects
+ #prentice=NA,                          # righthand formula, if prentice weighted terms, e.g. ~ A + A:C, or TRUE to weight all model effects
+ # AHR=TRUE,                            # template to set prentice=TRUE, robust=TRUE, censcorr=TRUE
+ # ARE=FALSE,                           # template to set prentice=NA, breslow=NA, taroneware=NA, robust=TRUE, censcorr=TRUE
+ # PH=FALSE,                            # template to set prentice=NA, breslow=NA, taroneware=NA, robust=TRUE, censcorr=FALSE
+ # AHR.norobust=FALSE,                  #  template to set   prentice=TRUE, robust=FALSE, censcorr=TRUE
  ...                                    # N -> breslow; km -> prentice
  )
+
+### by DD 2014 input is simplified
 ### by MP und GH, 2009
 ### Surv-Objekt entweder usual  (z.B. Surv(time,event)~A+B+C+D) oder
 ### Counting-Process-Style!! (z.B. Surv(start,stop,event)~A+B+C+D)
 ### event: 1=dead/event, 0=censored
-{
-        ## evt. use of abbrev. parameter names
-        l <- list(...)
-        if("N" %in% names(l)) breslow <- l$N
-        if("km" %in% names(l)) prentice <- l$km
-        
-        
+
+{  
+  if (length(template) == 3) { template <- "AHR" }                                         # default
+
+  if (!template %in% c("AHR", "ARE", "PH")) {   
+    stop("Use one of the following templates: AHR, ARE, or PH.\n") } 
+
+  
+  if (template %in% "AHR")  { AHR <- TRUE; ARE <- PH <- FALSE  } else  
+  if (template %in% "ARE")  { ARE <- TRUE; AHR <- PH <- FALSE  } else  
+  if (template %in% "PH")   { PH <- TRUE;  ARE <- AHR <- FALSE }
+  
+  # old syntax
+  AHR.norobust <- censcorr <- FALSE
+  breslow <- taroneware <- prentice <- NA        
+  
+  if (ARE == TRUE) { censcorr <- TRUE } else
+  if (AHR == TRUE) { prentice <- censcorr <- TRUE }
+    
+  #if (!(template %in% "none")) {   
+  #  robust <- FALSE 
+  #  breslow <- NA 
+  #  taroneware <- NA 
+  #  censcorr <- FALSE 
+  #  
+  #  if (template %in% "AHR")          { AHR <- TRUE;  AHR.norobust <- ARE <- PH <- FALSE  } else  
+  #  if (template %in% "AHR.norobust") { AHR.norobust <- TRUE;  AHR <- ARE <- PH <- FALSE  } else  
+  #  if (template %in% "ARE")          { ARE <- TRUE;  AHR.norobust <- AHR <- PH <- FALSE  } else  
+  #  if (template %in% "PH")           { PH <- TRUE;  AHR.norobust <- ARE <- AHR <- FALSE  }
+  #}  
+    
+    
+  ## evt. use of abbrev. parameter names / old syntax
+  l <- list(...)
+  #if (template %in% "none") { 
+  #  if("N" %in% names(l)) breslow <- l$N
+  #  if("km" %in% names(l)) prentice <- l$km
+  #  if ("robust" %in% names(l))        { robust <- l$robust }             else { robust <- FALSE }
+  #  if ("breslow" %in% names(l))       { breslow <- l$breslow }           else { breslow <- NA }
+  #  if ("taroneware" %in% names(l))    { taroneware <- l$taroneware }     else { taroneware <- NA }
+  #  if ("AHR" %in% names(l))           { AHR <- l$AHR }                   else { AHR <- TRUE }
+  #  if ("AHR.norobust" %in% names(l))  { AHR.norobust <- l$AHR.norobust } else { AHR.norobust <- FALSE }
+  #  if ("PH" %in% names(l))            { PH <- l$PH }                     else { PH <- FALSE }
+  #  if ("ARE" %in% names(l))           { ARE <- l$ARE }                   else { ARE <- FALSE }
+  #  if ("censcorr" %in% names(l))      { censcorr <- l$censcorr }         else { censcorr <- FALSE }
+  #}                
+  if ("scale.weights" %in% names(l)) { scale.weights <- l$scale.weights } else { scale.weights <- 1 }
+  
+  
+  if (!is.null(betafix)) { 
+    if (length(betafix) != sum(apply(attr(terms.formula(formula), "factors"), 1, sum) > 0)) { 
+      stop("The number of model terms in formula and the length of betafix must be identical.\n") 
+    } 
+    pc <- pc.time <- FALSE 
+  }
+
+      
         # apply templates
-        if (AHR.norobust==TRUE) {
-          prentice<-TRUE
-          censcorr<-TRUE
-          robust<-FALSE
-        } else if (PH==TRUE) {
-          prentice<-NA
-          breslow<-NA
-          taroneware<-NA
-          robust=TRUE
-          censcorr<-FALSE
-        } else if (ARE==TRUE) {
-          prentice<-NA
-          breslow<-NA
-          taroneware<-NA
-          robust=TRUE
-          censcorr<-TRUE
-        }   else  if (AHR==TRUE) {
-          prentice<-TRUE
-          censcorr<-TRUE
-          robust<-TRUE
-          }
-
-
+        #if (AHR.norobust==TRUE) {
+        #  prentice<-TRUE
+        #  censcorr<-TRUE
+        #  robust<-FALSE
+        #} else 
+        #if (PH==TRUE) {
+        #  prentice<-NA
+        #  breslow<-NA
+        #  taroneware<-NA
+        #  robust=TRUE
+        #  censcorr<-FALSE
+        #} else if (ARE==TRUE) {
+        #  prentice<-NA
+        #  breslow<-NA
+        #  taroneware<-NA
+        #  robust=TRUE
+        #  censcorr<-TRUE
+        #}   else  if (AHR==TRUE) {
+        #  prentice<-TRUE
+        #  censcorr<-TRUE
+        #  robust<-TRUE
+        #  }
         
         # preserve some hierarchy of weighting rules
-        if (!is.na(prentice)){
-         if (prentice==TRUE) {
-            breslow<-NA
-            taroneware<-NA
-            }
-         }
-        if (!is.na(breslow)){
-          if (breslow==TRUE) {
-            taroneware<-NA
-            }
-          }
+#        if (!is.na(prentice)){
+#         if (prentice==TRUE) {
+#            breslow<-NA
+#            taroneware<-NA
+#            }
+#         }
+#        if (!is.na(breslow)){
+#          if (breslow==TRUE) {
+#            taroneware<-NA
+#            }
+#          }
         
+    
         n <- nrow(data)
         pl <- FALSE
         robcov <- if(robust) 1 else 0
@@ -102,13 +156,17 @@ coxphw <- function
         
         ## here only ONCE the full model matrix is spanned with all possible fp-effects
 	      obj.full <- decomposeSurv(formula, data, sort=FALSE, offset)
+        if ((obj.full$NFP != 0) & (!is.null(betafix))) { 
+          stop("Estimation with fractional polynomials and the betafix argument cannot be requested at the same time.\n")  
+        } 
         PTcoefs <- obj.full$PTcoefs
         if(round.times.to > 0) {
            obj.full$resp[, 1] <- round(obj.full$resp[, 1],-log10(round.times.to))
            obj.full$resp[, 2] <- round(obj.full$resp[, 2],-log10(round.times.to))
         }
         obj.full$resp[, 1] <- obj.full$resp[, 1] + add.constant         ### specify in option! round.times=automatic,or specify value
-        obj.full$resp[, 2] <- obj.full$resp[, 2] + 2*add.constant
+#        obj.full$resp[, 2] <- obj.full$resp[, 2] + 2*add.constant
+        obj.full$resp[, 2] <- obj.full$resp[, 2] + add.constant         ### changed 02-2014
         
         if(any(obj.full$resp[,2]<=0)) stop("Check survival times: all survival times must be strictly greater than 0.\n")
         if(any(obj.full$resp[,1]>= obj.full$resp[,2])) stop("Check survival times: stop time must be greater than start time.\n")
@@ -146,7 +204,7 @@ coxphw <- function
                 
                 ## **************** fit model and return Wald *********************
                 if(print) cat(paste(obj.full$covnames[obj$ind], collapse=", "), "\t\t")
-                interim <- coxphw.fit(obj, id, WW, PARMS, sorted=sorted, pc=FALSE)
+                interim <- coxphw.fit(obj, id, WW, PARMS, sorted=sorted, pc=FALSE, fixed=betafix)
                 wald<-interim$outpar[9] # FIT
                 iterations<-interim$outpar[10]
                 if (iterations>=maxit) warn<-" No convergence!"
@@ -308,7 +366,7 @@ coxphw <- function
          cat("\nPretransformations (z+shift)/scale:\n")
          print(obj.full$PTcoefs)
          cat("\n")
-         cat("Algorithm 'RA2' has selected:", obj.full$covnames[obj$ind], "\n\n")
+         cat("'Modified MFP' selected:", obj.full$covnames[obj$ind], "\n\n")
          }
         if(!any(obj$ind)){
           stop("Null model is returned!")
@@ -349,7 +407,7 @@ coxphw <- function
         ##    IOARRAY[2,1]<-Z.sd[1]    # first variable is offset
         ##   }
         ## **************** fit model *********************
-        value0 <- coxphw.fit(obj, id, W$weights, PARMS, sorted=sorted, pc=pc, pc.time=pc.time)
+        value0 <- coxphw.fit(obj, id, W$weights, PARMS, sorted=sorted, pc=pc, pc.time=pc.time, fixed=betafix)
         cov.ls <- value0$cov.ls
         if(!robust)  { 
           cov.lw<-NULL
@@ -381,9 +439,11 @@ coxphw <- function
         
         ## DECIDE THE MODEL: USE PVALS ##############
         probs <- 1 - pchisq((value0$coefs^2/vars), 1)
-        
-        
-        
+
+
+        ## ADAPT WALD-TEST IF BETAFIX WAS USED ##################
+        if (is.null(betafix)) { Wald <- value0$outpar[9] } else { Wald <- NA }
+
         ## ########## NOW ONLY FINAL MODEL IS CONSIDERED ############
         names(value0$coefs) <- obj$covnames
         if(value0$outpar[10]>=maxit)
@@ -393,9 +453,9 @@ coxphw <- function
         
         ## return object
         fit <- list(coefficients = value0$coefs, # coefficients of the fit
-                    cards    = value0$cards, #
-                    parms    = value0$outpar,
-                    ioarray  = value0$outtab,
+                    #cards    = value0$cards, #
+                    #parms    = value0$outpar,
+                    #ioarray  = value0$outtab,
                     dfbeta.resid = dfbeta.resid,
                     alpha    = alpha,   # significance level
                     var      = covs,    # covariance matrix
@@ -406,30 +466,32 @@ coxphw <- function
                     ##terms = terms(formula),
                     y = obj$resp,       # responses
                     formula = formula,  # original formula
-                    exit.code=value0$outpar[8],
+                    #exit.code=value0$outpar[8],
                     
                     fpind=obj$fpind,
                     PTcoefs=obj.full$PTcoefs,
                     ind=obj$ind,
                     
-                    call    = match.call(),
-                    offset=offset,
-                    cov.j   = cov.j,    # jackknife covariance matrix
-                    cov.lw  = cov.lw,   #
-                    cov.ls  = cov.ls,   #
-                    cov.method=cov.method,
-                    w.matrix= W$w.matrix, # weight matrix
-                    Wald    = value0$outpar[9],
-                    means   = Means,    # means of <X> (model matrix)
-                    linear.predictors= as.vector(scale(value0$mmm, Means, scale=FALSE) %*% value0$coefs),
-                    method  = "Weighted Estimation",
-                    method.ci= "Wald",  #
-                    ci.lower= exp(value0$coefs + qnorm(alpha/2) * vars^0.5), #
-                    ci.upper= exp(value0$coefs + qnorm(1 - alpha/2) * vars^0.5), #
-                    prob    = 1 - pchisq((value0$coefs^2/vars), 1), # p-values
-                    offset.values= obj$offset.values, # 
-                    dataline = data[1,],
-                    x       = if(x) obj$mm1 else NA # return original model matrix if requested
+                    #offset            = offset,
+                    cov.j             = cov.j,    # jackknife covariance matrix
+                    cov.lw            = cov.lw,   #
+                    cov.ls            = cov.ls,   #
+                    cov.method        = cov.method,
+                    w.matrix          = W$w.matrix, # weight matrix
+                    Wald              = Wald,
+                    means             = Means,    # means of <X> (model matrix)
+                    linear.predictors = as.vector(scale(value0$mmm, Means, scale=FALSE) %*% value0$coefs),
+                    #method            = "Weighted Estimation",
+                    #method.ci         = "Wald",  
+                    ci.lower          = exp(value0$coefs + qnorm(alpha/2) * vars^0.5), #
+                    ci.upper          = exp(value0$coefs + qnorm(1 - alpha/2) * vars^0.5), #
+                    prob              = 1 - pchisq((value0$coefs^2/vars), 1), # p-values
+                    offset.values     = obj$offset.values, # 
+                    dataline          = data[1,],
+                    x                 = if(x) obj$mm1 else NA,  # return original model matrix if requested
+                    template          = template,
+                    betafix           = betafix,
+                    call              = match.call()
                     )
         ## if all weights are the same ...
         #if(W$const) {
@@ -448,106 +510,4 @@ coxphw <- function
         names(fit$prob) <- names(fit$ci.upper) <- names(fit$ci.lower) <- obj$covnames
         attr(fit, "class") <- c("coxphw.fp","coxphw", "coxph")
         fit
-}
-
-plotw <- function
-(
- x,    # object of class coxphw
- rank=FALSE,
- log=FALSE,
-  ...            # dummy
- )
- {
-    w.matrix<-x$w.matrix[order(x$w.matrix[,1]),]
-   if(rank) {
-    time<-rank(w.matrix[,1])
-    label<-"Ranked time"
-    }
-   else {
-    time<-w.matrix[,1]
-    label<-"Time"
-    }
-   if(log) {
-    weights<-log(w.matrix[,2:4])
-    wlabel<-"Log of weight"
-   }
-   else {
-    weights<-w.matrix[,2:4]
-    wlabel<-"Weight"
-    }
-   plot(time, weights[,1],type="l",lty=1,ylim=c(min(weights),max(weights)), xlab=label, ylab=wlabel)
-   lines(time, weights[,2],lty=2)
-   lines(time, weights[,3],lty=3)
-   legend(min(time),0.95*max(weights),c("Raw weight","Censoring weight","Normalized total weight"),lty=1:3, lwd=1)
- }
- 
-
-print.coxphw <- function
-(
-  x,     # object of class coxphw
-  ...            # dummy
- )
-### MP and GH
-### overall test is score test
-### 2007-07
-{
-        print(x$call)
-        cat("Model fitted by", x$method, "\n\n")
-        se<- diag(x$var)^0.5
-        out <- cbind(x$coefficients, se, exp(x$coefficients),
-                     x$ci.lower, x$ci.upper, x$coefficients/se, x$prob)
-        dimnames(out) <- list(names(x$coefficients),
-                              c("coef", "se(coef)", "exp(coef)",
-                                paste(c("lower", "upper"), 1 - x$alpha), "z", "p"))
-        
-        if (x$method.ci != "Wald")
-          dimnames(out)[[2]][6] <- "Chisq"
-        print(out)
-        
-#        if("loglik" %in% names(x)) cat("\nScore test=", x$score, " on ", x$df,
-#            " df, p=", 1 - pchisq(x$score, x$df), ", n=", x$n, "", sep = "")
-        cat("\nWald Chi-square=", x$Wald, " on ", x$df, "df, p=", 1 - pchisq(x$Wald, x$df), ", n=", x$n, "\n\n", sep = "")
-        
-        invisible(x)
-}
-
-
-summary.coxphw <- function
-(
- object,              # object of class coxphf
- ...                  # dummy
- )
-### MP and GH
-### 2007-07
-{
-        print(object$call)
-        cat("\nModel fitted by", object$method, "\n\n")
-        ##cat("Confidence intervals and p-values by", object$method.ci, "\n\n")
-        se<-diag(object$var)^0.5
-        out <- cbind(object$coefficients, se,
-                     exp(object$coefficients),
-                     object$ci.lower, object$ci.upper,
-                     object$coefficients/se, object$prob)
-        dimnames(out) <- list(names(object$coefficients),
-                              c("coef", "se(coef)", "exp(coef)",
-                                paste(c("lower", "upper"), 1 - object$alpha), "z", "p"))
-        if (object$method.ci != "Wald")
-          dimnames(out)[[2]][6] <- "Chisq"
-        
-        print(out)
-        
-        if("loglik" %in% names(object)) {
-                LL <- 2 * diff(object$loglik)
-                cat("Likelihood ratio test=", LL, " on ", object$df,
-                    " df, p=", 1 - pchisq(LL, object$df), ", n=", object$n, "\n", sep = "")
-                cat("\nScore test=", object$score, " on ", object$df,
-            " df, p=", 1 - pchisq(object$score, object$df), ", n=", object$n, "\n", sep = "")
-        }
-#        wald.z <- t(coef(object)) %*% solve(object$var) %*% coef(object)
-        cat("Wald Chi-square =", object$Wald, "on", object$df, " df, p =",
-            1 - pchisq(object$Wald, object$df))
-        cat("\n\nCovariance-Matrix:\n")
-        print(object$var)
-        
-        invisible(object)
 }

@@ -1,81 +1,44 @@
 \name{plotw}
-\alias{plotw}
-\title{Plot weights of weighted estimation in Cox regression}
-\description{
-             This function plots the weights used in a weighted Cox regression analysis against time.
-}
-\usage{
-plotw(x, rank=FALSE, log=FALSE, ...)}
-\arguments{
-  \item{x}{a coxphw object}
-  \item{rank}{if set to TRUE, plots the weights against ranked time (default=F)}
-  \item{log}{if set to TRUE, shows logarithm of weights (default=F)}
-  \item{...}{additional arguments for plotting}
-}
-\details{
- The function plots the raw, inverse-censoring-Kaplan-Meier, and normalized total weights against (ranked) time.
-    }
-\value{
- No output value.
-}
-\author{Georg Heinze}
-\seealso{coxph}
-\keyword{survival}
-\examples{
-gastric <-
-  structure(list(patnr = as.integer(c(46, 1, 2, 3, 4, 5, 47, 6,
-                   7, 8, 9, 48, 10, 11, 49, 12, 13, 14, 50, 15, 16, 17, 18, 19,
-                   20, 51, 21, 22, 52, 23, 53, 54, 55, 24, 25, 56, 57, 58, 59, 60,
-                   61, 62, 63, 64, 26, 65, 27, 66, 28, 29, 67, 68, 69, 70, 30, 71,
-                   31, 72, 32, 73, 33, 34, 74, 75, 76, 77, 78, 35, 79, 36, 80, 81,
-                   82, 37, 38, 39, 83, 84, 40, 85, 41, 86, 87, 88, 42, 43, 44, 89,
-                   90, 45)),
-                 treat = as.integer(c(0, 1, 1, 1, 1, 1, 0, 1, 1, 1,
-                   1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0,
-                   0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0,
-                   0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,
-                   1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1)),
-                 time = as.integer(c(1,
-                   17, 42, 44, 48, 60, 63, 72, 74, 95, 103, 105, 108, 122, 125,
-                   144, 167, 170, 182, 183, 185, 193, 195, 197, 208, 216, 234, 235,
-                   250, 254, 262, 301, 301, 307, 315, 342, 354, 356, 358, 380, 383,
-                   383, 388, 394, 401, 408, 445, 460, 464, 484, 489, 499, 523, 524,
-                   528, 535, 542, 562, 567, 569, 577, 580, 675, 676, 748, 778, 786,
-                   795, 797, 855, 955, 968, 977, 1174, 1214, 1232, 1245, 1271, 1366,
-                   1420, 1455, 1460, 1516, 1551, 1585, 1622, 1626, 1690, 1694, 1736
-                   )),
-                 status = as.integer(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
-                   0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0))),
-            .Names = c("patnr",
-              "treat", "time", "status"), class = "data.frame",
-            row.names = c("1",
-              "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
-              "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24",
-              "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35",
-              "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46",
-              "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57",
-              "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68",
-              "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",
-              "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90"
-              ))
-  
 
+\alias{plotw}
+
+\title{ Plot Weights of Weighted Estimation in Cox Regression }
+
+\description{ This function plots the weights used in a weighted Cox regression analysis against time. }
+
+\usage{ plotw(x, rank = FALSE, log = FALSE, legendxy = NULL,...) }
+
+\arguments{
+  \item{x}{ a \code{coxphw} object. }
+  \item{rank}{ if set to TRUE, plots the weights against ranked time. Default is FALSE. }
+  \item{log}{ if set to TRUE, shows logarithm of weights. Default is FALSE. }
+  \item{legendxy}{ an optional vector of length 2 of the x and y co-ordinates to be used to position the legend. }
+  \item{...}{ additional arguments for plotting }
+}
+
+\details{ The function plots the survival weights, i.e., the left-continuous survivor function 
+estimates, the censoring weights, i.e., estimates of the follow-up distribution obtained by 
+Kaplan-Meier estimation with reversed meaning of the status indicator and the combined 
+normalized weights, i.e. the product of the survival and the censoring weights, rescaled to a mean of 1.}
+
+\value{ No output value. }
+
+\author{Georg Heinze, Daniela Dunkler}
+
+\seealso{ \code{\link{coxphw}} }
+
+\keyword{survival}
+
+\examples{
+data("gastric")
 
 # weighted estimation of average hazard ratio
-  
-fit2<-coxphw(data=gastric, Surv(time,status)~treat, AHR=TRUE)
-plotw(fit2)
-
+fit1 <- coxphw(Surv(time, status) ~ radiation, data = gastric,  template = "AHR")
+plotw(fit1)
 
 # estimation of average regression effect by inverse probability of censoring weights;
 # truncate weights at 95th percentile
-
-fit2<-coxphw(data=gastric, Surv(time,status)~treat, ARE=TRUE, trunc.weights=0.95)
+fit2 <- coxphw(Surv(time, status) ~ radiation, data = gastric, template = "ARE", 
+               trunc.weights = 0.95)
 plotw(fit2)
-
-
 }
-

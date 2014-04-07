@@ -1,26 +1,19 @@
+## exportPattern("^[[:alpha:]]+")
+
 #### export of public functions:
-export(coxphw)
-export(plotw)
-export(plotfp)
-export(powM2)
-export(powM1)
-export(powM0.5)
-export(pow2)
-export(pow3)
-export(RI)
-export(RpowM2)
-export(RpowM1)
-export(RpowM0.5)
-export(Rlog)
-export(Rsqrt)
-export(Rpow2)
-export(Rpow3)
-export(PT)
-export(fp.power)
+export(concord, coxphw, plotw, plotshape, PT, fp.power, wald)
+#export(powM2,powM1, powM0.5, pow2, pow3, RI, RpowM2, RpowM1, RpowM0.5, Rlog, Rsqrt, Rpow2, Rpow3)
+
+#### import other packages:
+import('survival')
 
 #### definition of S3 methods:
 S3method(print, coxphw)
 S3method(summary, coxphw)
+S3method(coef, coxphw)
+S3method(vcov, coxphw)
+S3method(confint, coxphw)
+
 
 #### register shared objects (Fortran DLL):
 useDynLib(coxphw)

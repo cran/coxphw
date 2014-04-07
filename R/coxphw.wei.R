@@ -156,7 +156,7 @@ coxphw.wei <- function
         ## calculate weight matrix
         ### weight truncation (30-04-2009)
         quant <- function(x)  { as.vector(quantile(x, probs=trunc.weights)) }
-        quant.w<-quant(w)
+        quant.w<-quant(w)        
         w[w>quant.w]<-quant.w
         w.matrix <- cbind(time=obj$resp[,2], w.raw, w.obskm, w)[obj$resp[,3] != 0,]
         orderw <- rank(w.matrix[,1])

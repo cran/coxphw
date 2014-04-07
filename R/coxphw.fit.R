@@ -8,7 +8,8 @@ coxphw.fit <- function
  sorted=FALSE,
  pc=TRUE,
  pc.time=TRUE,
- standardize=TRUE
+ standardize=TRUE,
+ fixed=NULL
  )
 ### fitter function
 ### 2010-07-07
@@ -17,6 +18,7 @@ coxphw.fit <- function
         k <- ncol(obj$mm1)    # number covariates w/o time-dep effects
         k2 <- k + obj$NTDE
         NTDE <- obj$NTDE
+        if(NTDE>0 & k>1) pc<-FALSE
         kk <- k
         maxid <- max(id)
         
@@ -54,7 +56,7 @@ coxphw.fit <- function
        obj$mm1 <- scale(obj$mm1, FALSE, sd1)
        mm1.orig <- scale(mm1.orig, FALSE, sd1.orig)
        ### end new code
- 
+       if(!is.null(fixed)) fixed[!is.na(fixed)]<-fixed[!is.na(fixed)]*Z.sd[!is.na(fixed)]
         
         ##if(ind.offset)
         obj$mm1o <- if(PARMS[16] != 0) cbind(obj$offset.values, obj$mm1) else obj$mm1
@@ -69,6 +71,11 @@ coxphw.fit <- function
         ##   }
         DFBETA <- matrix(0, maxid, k2)
         IOARRAY <- rbind(rep(1, k2), matrix(0, 2+3*k2, k2))       #changed georg 090604
+        if(!is.null(fixed)){
+          IOARRAY[1,!is.na(fixed)]<-0
+          IOARRAY[2,]<-fixed
+          IOARRAY[2,is.na(fixed)]<-0
+        }
         if(obj$NTDE >0 )
           IOARRAY[4, (k+1):k2] <- obj$timeind
         
