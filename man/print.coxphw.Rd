@@ -6,7 +6,7 @@
 
 \description{ This class of objects is returned by the \code{coxphw} function. 
   Objects of this class have methods for the functions \code{summary}, \code{print}, \code{coef}, 
-  \code{vcov}, and \code{confint}. }
+  \code{vcov}, \code{plot}, and \code{confint}. }
 
 \usage{ \method{print}{coxphw}(x, ...) }
 
@@ -15,9 +15,9 @@
   \item{\dots}{ further arguments. }  
 }
 
-\details{If \code{betafix} was requested for one or more regression coefficients, no estimates on inference
-are given for these coefficients as they were not estimated in the model. The global Wald test 
-only relates to those variables for whom regression coefficients were estimated.}
+\details{If  some regression coefficients were held fixed by \code{betafix}, then no standard errors are
+ given for these coefficients as they are not estimated in the model. The global Wald test 
+only relates to those variables for which regression coefficients were estimated.}
 
 %%\value{  ~Describe the value returned }
 

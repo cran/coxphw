@@ -23,7 +23,7 @@
 
 \seealso{ \code{\link{coxphw}} }
 
-\references{ Royston P and Altman D (1994). Regression Using Fractional Polynomials of Continuous Covariates: Parsimonious Parametric Modelling. \emph{Applied Statistics} \bold{43}, 429-467.
+\references{ Royston P and Altman D (1994). Regression Using Fractional Polynomials of Continuous Covariates: Parsimonious Parametric Modelling. \emph{J R STAT SOC C-APPL} \bold{43}, 429-467.
 
 Royston P and Sauerbrei W (2008). \emph{Multivariable Model-Building. A Pragmatic Approach to Regression 
 Analysis Based on Fractional Polynomials for Modelling Continuous Variables.} Wiley, Chichester, UK. }

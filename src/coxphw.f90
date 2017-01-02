@@ -1,67 +1,67 @@
 SUBROUTINE WEIGHTEDCOX(cards, parms, IOARRAY, DFBETA)
 !DEC$ ATTRIBUTES DLLEXPORT :: weightedcox
 
-IMPLICIT DOUBLE PRECISION (A-H,O-Z)  
-
+IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 
 !This version allows for offset (1st col of X matrix), control by 16th entry of parms
 !no pre-sorting necessary if score weights are available in each of several tied event rows
 
-real*8, dimension (16) :: parms
+double precision, dimension (16) :: parms
 integer N, IP,JCODE,Irobust,ISEP,ITER,IMAXIT,IMAXHS,Ioffset
-real*8, dimension (int(parms(1))) :: BX, T1, t2, TMSF, Doffset, doffset2
-real*8, dimension (int(parms(1)),int(parms(2))) :: X, XMSF
-!real*8, dimension (int(parms(1)),int(parms(2))) :: X, XMSF, bresx
-real*8, dimension (int(parms(2)+parms(14))) :: B, B0, FD, TDERR,BMSF,zw1, xx, xfd, yy, dinit, fdx 
-real*8, dimension (int(parms(2)+parms(14)),int(parms(2)+parms(14))) :: SD, VM, vmlw, vmls, WK, fish, ainv, vminv
+double precision, dimension (int(parms(1))) ::  T1, t2,  Doffset, doffset2, casew
+double precision, dimension (int(parms(1)),int(parms(2))) :: X
+!double precision, dimension (int(parms(1)),int(parms(2))) :: X, XMSF, bresx
+double precision, dimension (int(parms(2)+parms(14))) :: B, B0, FD, zw1, xx, xfd, yy, dinit, fdx
+double precision, dimension (int(parms(2)+parms(14)),int(parms(2)+parms(14))) ::  VM, vmlw, vmls, WK, fish, ainv, vminv
 !integer, dimension (int(parms(1))) :: ibresc, IC, ICMSF, patid
-integer, dimension (int(parms(1))) :: IC, ICMSF, patid
+integer, dimension (int(parms(1))) :: IC,  patid
 integer, dimension (int(parms(2)+parms(14))) :: IFLAG
-real*8, dimension (int(parms(15)), int(parms(2)+parms(14))) :: dfbeta
-real*8, dimension (int(parms(1)),int((2*parms(2)+4+2*(parms(14))))) :: cards
-real*8, dimension (int((3+3*(parms(2)+parms(14)))),int((parms(2)+parms(14)))) :: IOARRAY
-real*8, dimension (14) :: DER, EREST
+double precision, dimension (int(parms(15)), int(parms(2)+parms(14))) :: dfbeta
+double precision, dimension (int(parms(1)),int((parms(16)+2*parms(2)+5+2*(parms(14))))) :: cards
+double precision, dimension (int((3+3*(parms(2)+parms(14)))),int((parms(2)+parms(14)))) :: IOARRAY
+!double precision, dimension (14) :: DER, EREST
 logical, dimension (int(parms(2)+parms(14)),int(parms(2)+parms(14))) :: mask
-real*8, dimension (int(parms(1)),int(parms(14)+1)) :: ft
+double precision, dimension (int(parms(1)),int(parms(14)+1)) :: ft
 integer ngv, ntde
 integer, dimension (int(parms(14)+1)) :: ftmap
-real*8, dimension (int(parms(1)), int(parms(14)+parms(2))) :: score_weights
+double precision, dimension (int(parms(1)), int(parms(14)+parms(2))) :: score_weights
 
-INTRINSIC DABS, DSQRT               
+INTRINSIC DABS, DSQRT
 
-! cards contains in its last column the ID numbers of the patients (starting from 1)
+! cards contains in its last-but-one column the ID numbers of the patients (starting from 1)
+! cards contains in its last column case weights
 ! parms(15) contains the number of patients (the max of patid)
 
 !open(unit=6, file="fgcssan.txt")
 
 ! ntde = parms(14)
-ifail=0              
-N=parms(1)
-IP=parms(2)
-Irobust=parms(3)
-imaxit=Parms(4)
-imaxhs=parms(5)
+ifail=0
+N=int(parms(1))
+IP=int(parms(2))
+Irobust=int(parms(3))
+imaxit=int(Parms(4))
+imaxhs=int(parms(5))
 step=parms(6)
 xconv=parms(7)
 gconv=parms(8)
 
-ngv=parms(13)
-ntde=parms(14)
+ngv=int(parms(13))
+ntde=int(parms(14))
 numbpatients=int(parms(15))
 ioffset=int(parms(16))
 patid=int(cards(:,int(ioffset+(2*parms(2)+4+2*(parms(14))))))
-
 parms(10)=-11
+casew=cards(:,int(ioffset+(2*parms(2)+5+2*(parms(14)))))
 
 ilastlike=0
 !ilastlike=1   ! would always compute correct variance (lin-sasieni), but needs more iterations
 
 dinit=ioarray(2,:)
-iflag=ioarray(1,:)
+iflag=int(ioarray(1,:))
 
 t1=cards(:,ip+1+ioffset)
 t2=cards(:,ip+2+ioffset)
-ic=cards(:,ip+3+ioffset)
+ic=int(cards(:,ip+3+ioffset))
 score_weights=cards(:,(ip+4+ioffset):(2*ip+3+ioffset+ntde))
 
 x=cards(:,(ioffset+1):(ioffset+ip))
@@ -70,8 +70,8 @@ if (ioffset .eq. 1) then
  Doffset = cards(:,1)
 end if
 doffset2 = doffset
- 
-if (ntde .gt. 0) then 
+
+if (ntde .gt. 0) then
 ! do j=1,ntde
 !  ftmap(j)=ioarray(4,ip+j)
 !  write(6,*) ftmap(j)
@@ -80,7 +80,7 @@ if (ntde .gt. 0) then
 !   write(6,*) ft(i,j)
 !  end do
   ft(:,1:ntde)=cards(:,(2*ip+3+ntde+1+ioffset):(2*ip+3+ntde*2+ioffset))
-  ftmap(1:ntde)=ioarray(4,(ip+1):(ip+ntde))
+  ftmap(1:ntde)=int(ioarray(4,(ip+1):(ip+ntde)))
 !  end do
 else
  ft=0
@@ -93,7 +93,8 @@ end if
 do i=1,n-1,1
  if (ic(i+1)-1 .gt. -0.0001) then !if next one is event
   if (dabs(t2(i)-t2(i+1)) .lt. 0.0001) then !and if times are equal
-   score_weights(i+1,:)=score_weights(i,:) ! then copy the weight down, not necessary provided the score weights are available for each of several simultaneous events
+   score_weights(i+1,:)=score_weights(i,:) ! then copy the weight down, not necessary &
+            !provided the score weights are available for each of several simultaneous events
   end if
  end if
 end do
@@ -148,7 +149,8 @@ do while((iconv .eq. 0) .and. (iter .lt. imaxit))
 parms(10)=-10
 ! write(6,*) "Vor 1. LIKE", b
  if (iter .eq. 1) then
-  CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE,ngv,score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, vminv)
+  CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE,ngv,score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, &
+    vminv, casew)
  end if
 
  XL0=XL
@@ -162,7 +164,7 @@ parms(10)=-10
 ! IFAIL=0
 ! wk=-sd
 ! EPS=.000000000001D0
-! CALL INVERT(WK,IP+ntde,IP+ntde,VM,IP+ntde,EPS,IFAIL)                             
+! CALL INVERT(WK,IP+ntde,IP+ntde,VM,IFAIL)
  IF(ITER.EQ.1) then
   parms(12)=xl
   zw=0.
@@ -180,9 +182,9 @@ parms(10)=-10
    ICONV=0
    parms(8)=3
    return
-  else  
-   DO I=1,(IP+ntde)                                                      
-    IF (IFLAG(I).EQ.1) then 
+  else
+   DO I=1,(IP+ntde)
+    IF (IFLAG(I).EQ.1) then
      TT=dot_product(vm(I,:),fd(:)*iflag(:))
      IF (DABS(TT).GT.STEP) TT=TT/DABS(TT)*STEP
      B(I)=B(I)+TT
@@ -192,25 +194,28 @@ parms(10)=-10
    ICONV=0
    IHS=0
 
-   CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, vminv)
+   CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, &
+        vminv, casew)
    FD_sumabs=sum(abs(FD))
-   do while(((FD_sumabs .gt. FD_sumabs0) .AND. (ITER.ne.1)) .AND. (ihs .le. imaxhs) .and. ((ngv .EQ. IP+ntde) .OR. (ngv .EQ. 0))) 
+   do while(((FD_sumabs .gt. FD_sumabs0) .AND. (ITER.ne.1)) .AND. (ihs .le. imaxhs) .and. &
+        ((ngv .EQ. IP+ntde) .OR. (ngv .EQ. 0)))
     IHS=IHS+1
     where (iflag .eq. 1)
      b=(b+b0)/2
     end where
-    CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, vminv)
+    CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, &
+    vminv, casew)
    end do
   end if
  end if
  ICONV=1
  if (isflag .gt. 0) then
-  XX=dabs(B-B0) 
+  XX=dabs(B-B0)
   fdx=fd
-  where(iflag .eq. 0) 
+  where(iflag .eq. 0)
     fdx=0
   endwhere
-  XFD=dabs(fdx)                                              
+  XFD=dabs(fdx)
   IF(any(XX.GT.xconv)) ICONV=0
   if(any(xfd .gt. gconv)) iconv=0
  end if
@@ -223,9 +228,10 @@ end do
 !EPS=.000000000001D0
 
 
-!CALL INVERT(WK,IP+ntde,IP+ntde,VM,IP+ntde,EPS,IFAIL)       
+!CALL INVERT(WK,IP+ntde,IP+ntde,VM,IFAIL)
 ilastlike=1
-CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, vminv)
+CALL LIKE(N,IP,X,T1,t2,IC,XL,FD,vm,B,JCODE, ngv, score_weights,ntde,ft,ftmap,ilastlike,doffset,ainv, &
+     vminv, casew)
 
 vmls=vm
 wk=vmls
@@ -237,7 +243,8 @@ do j=1,ip+ntde
  end do
 
 if (irobust .eq. 1 .or. irobust .eq. 3) then   ! Lin-Wei-Varianz
- CALL dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,ainv,dfbeta,doffset,sumabsoff)
+ CALL dfbetaresid_lw(N,IP,X,T1,t2,IC,B,score_weights,ntde,ft,ftmap,numbpatients,patid,ainv,dfbeta,doffset,&
+       sumabsoff, casew)
 ! CALL dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,sumabsoff)
  vmlw=matmul(transpose(dfbeta),dfbeta)
  do j=1,ip+ntde
@@ -248,7 +255,8 @@ if (irobust .eq. 1 .or. irobust .eq. 3) then   ! Lin-Wei-Varianz
  wk=vmlw
 end if
 if (irobust .ge. 2) then   ! Jackknife-Varianz
- CALL dfbetaresid(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,doffset,imaxit,xconv)
+ CALL dfbetaresid(N,IP,X,T1,t2,IC,B,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,doffset,imaxit,&
+      xconv, casew)
  vm=real(numbpatients-1)/real(numbpatients)*matmul(transpose(dfbeta),dfbeta)
  do j=1,ip+ntde
   do j2=1,ip+ntde
@@ -259,9 +267,9 @@ if (irobust .ge. 2) then   ! Jackknife-Varianz
 end if
 
 
-CALL INVERT(WK,IP+ntde,IP+ntde,fish,IP+ntde,EPS,IFAIL)       
+CALL INVERT(WK,IP+ntde,IP+ntde,fish,IFAIL)
 
- 
+
 
 !do j=1,(ip+ntde)
 ! ioarray(3,j)=b(j)
@@ -297,14 +305,14 @@ DFBETA = dfbeta
 
 !close(unit=6)
 
-RETURN              
+RETURN
 
 end
 
 
 SUBROUTINE plusone(a)
 
-real*8 a
+double precision a
 
 a=a+1.
 
@@ -313,45 +321,45 @@ end
 
 
 
-SUBROUTINE INVRT(A,IA)                          
+SUBROUTINE INVRT(A,IA)
 
 
-!                                                                       
-!...original matrix=a inverse matrix =a (on exit)                                 
-!...note that a is changed on exit                                      
-!                                                                       
+!
+!...original matrix=a inverse matrix =a (on exit)
+!...note that a is changed on exit
+!
  INTEGER IA,n
- real*8 eps                                             
- real*8, dimension (IA,ia) :: A, B, WK
- INTRINSIC DABS                                                    
-                                                                       
+ !double precision eps
+ double precision, dimension (IA,ia) :: A, B, WK
+ INTRINSIC DABS
+
  wk=a
 
  IFAIL=0
  b=a
  N=ia
- 
+
  CALL vert(b, IA, N, WK)
  a=b
-    
- RETURN
-END  
 
-SUBROUTINE INVERT(A,IA,N,B,IB,EPS,IFAIL)                          
+ RETURN
+END
+
+SUBROUTINE INVERT(A,IA,N,B,IFAIL)
 !DEC$ ATTRIBUTES DLLEXPORT :: invert
 
 
-!                                                                       
-!...original matrix=a inverse matrix =b                                 
-!...note that a is changed on exit                                      
-!...eps is a small quantity used to see if matrix singular              
-!...ifail on exit ifail=0 ok, ifail=1 matrix nearly singular            
-!                                                                       
- INTEGER IA,N,ib,ifail
- real*8 eps                                             
- real*8, dimension (IA,N) :: A, B, WK
- INTRINSIC DABS                                                    
-                                                                       
+!
+!...original matrix=a inverse matrix =b
+!...note that a is changed on exit
+!...eps is a small quantity used to see if matrix singular
+!...ifail on exit ifail=0 ok, ifail=1 matrix nearly singular
+!
+ INTEGER IA,N,ifail
+ !double precision eps
+ double precision, dimension (IA,N) :: A, B, WK
+ INTRINSIC DABS
+
  wk=a
 
  IFAIL=0
@@ -359,56 +367,48 @@ SUBROUTINE INVERT(A,IA,N,B,IB,EPS,IFAIL)
 
  CALL vert(b, IA, N, WK)
 
-    
+
  RETURN
-END  
+END
 
-function deter(ain, IA, n)
 
- INTEGER e, ia, n
- real*8, dimension (IA, N) :: AIN
- real*8, dimension(3+n*(n+1)) :: a
- call fact(ain, a, IA, N)
- deter=det(e,a,n)
- deter=deter*10**e
 
- return
-end function deter
 
-SUBROUTINE LIKE(N,IP,X,T1,t2,IC,XL,FD,VM,B,JCODE, ngv, score_weights, ntde,ft, ftmap,ilastlike,offset,ainv,vminv) 
+SUBROUTINE LIKE(N,IP,X,T1,t2,IC,XL,FD,VM,B,JCODE, ngv, score_weights, ntde,ft, ftmap,ilastlike,offset,ainv, &
+vminv, casew)
 !DEC$ ATTRIBUTES DLLEXPORT :: like
 
  IMPLICIT DOUBLE PRECISION (A-H,O-Z)
- real*8, dimension (IP+ntde,IP+ntde) :: DINFO, DINFOI, SDa, sdb, SDI, WK, help, vm, ainv, vminv
- real*8, dimension (IP+ntde,IP+ntde,IP+ntde) :: dabl
- real*8 SEBX, zeitp
- real*8, dimension (IP+ntde) :: XEBX
- !real*8, dimension (IP+ntde) :: XEBX, bresxges
- real*8, dimension (IP+ntde,IP+ntde) :: XXEBX
-! real*8, dimension (N+1, IP, Ip, IP) :: XXXEBX
- real*8, dimension (IP+ntde) :: FD, B, h1, h2, h3
- real*8, dimension (N) :: EBX, BX, T1, t2, WKS, hh0, hh1, hh2, offset
+ double precision, dimension (IP+ntde,IP+ntde) :: SDa, sdb, SDI, WK,  vm, ainv, vminv
+ double precision, dimension (IP+ntde,IP+ntde,IP+ntde) :: dabl
+ double precision SEBX, zeitp
+ double precision, dimension (IP+ntde) :: XEBX
+ !double precision, dimension (IP+ntde) :: XEBX, bresxges
+ double precision, dimension (IP+ntde,IP+ntde) :: XXEBX
+! double precision, dimension (N+1, IP, Ip, IP) :: XXXEBX
+ double precision, dimension (IP+ntde) :: FD, B
+ double precision, dimension (N) :: EBX, BX, T1, t2, hh0, hh1, offset, casew
 ! integer, dimension (N) :: IC,ibresc
  integer, dimension (N) :: IC
- integer, dimension (IP+NTDE) :: iflag
- !real*8, dimension (N,IP) :: X, bresx
- real*8, dimension (N,IP) :: X
- real*8, dimension (N, ip+ntde) :: xges, score_weights
+ !integer, dimension (IP+NTDE) :: iflag
+ !double precision, dimension (N,IP) :: X, bresx
+ double precision, dimension (N,IP) :: X
+ double precision, dimension (N, ip+ntde) :: xges, score_weights
  logical ifastmode
  integer ngv, ntde
  logical, dimension (N) :: maske
- real*8, dimension (N,ntde+1) :: ft
+ double precision, dimension (N,ntde+1) :: ft
  integer, dimension (ntde+1) :: ftmap
 
- intrinsic dexp, dsqrt 
+ intrinsic dexp, dsqrt
 
  dlowest=0.000000001
 ! write(6,*) "in LIKE"
  XL=0.
 
- 
+
  ipges=ip+ntde
-                                        
+
  ! bx=matmul(x,b)
  ! ebx=dexp(bx)
 
@@ -421,7 +421,7 @@ SUBROUTINE LIKE(N,IP,X,T1,t2,IC,XL,FD,VM,B,JCODE, ngv, score_weights, ntde,ft, f
  dabl(:,:,:)=0.
 
 
-! Likelihood (XL) is only correct if all or none of the variables is weighted
+! Likelihood (XL) is only correct if all or none of the variables is (score-)weighted
 
 
 ! do i=1,n
@@ -440,14 +440,14 @@ end if
 
 if (ifastmode .eqv. .false.) then
  do i=1,N
-  if (ic(i) .ne. 0) then   
+  if (ic(i) .ne. 0) then
 !   write(6,*) i
 !   do i2=1,N
 !    zeitp(i2)=t2(i)-0.00001
 !   end do
    zeitp=t2(i)-0.00001
    where ((t1 .lt. zeitp) .and. (t2.ge. zeitp))
-    maske=.true. 
+    maske=.true.
    elsewhere
     maske=.false.
    end where
@@ -469,18 +469,18 @@ if (ifastmode .eqv. .false.) then
 
    bx=matmul(xges,b)+offset
    ebx=dexp(bx)
-   sebx=sum(ebx,1,maske)
+   sebx=sum(ebx*casew,1,maske)
 !   write(6,*) "B",b
 !   write(6,*) "BX",bx
 !   write(6,*) "EBX",ebx
 !   write(6,*) "SEBX", sebx
    do j=1,ipges
     hh0=xges(:,j)*ebx
-    xebx(j)=sum(hh0,1,maske)
+    xebx(j)=sum(hh0*casew,1,maske)
 !   write(6,*) "XEBX(",j,")",xebx(j)
     do k=1,ipges
      hh1=hh0*xges(:,k)
-     xxebx(j,k)=sum(hh1,1,maske)
+     xxebx(j,k)=sum(hh1*casew,1,maske)
 !    write(6,*) "XXEBX(",j,",",k,")", xxebx(j,k)
     end do
    end do
@@ -490,27 +490,29 @@ if (ifastmode .eqv. .false.) then
    else
     dlogsebx=dlog(dlowest)
    endif
-    
 
-   if (ngv .eq. ipges) then 
-    XL=XL+(dot_product(xges(i,:),b)-ic(i)*DLOGSEBX)*score_weights(i,1)
+
+   if (ngv .eq. ipges) then
+    XL=XL+casew(i)*(dot_product(xges(i,:),b)-ic(i)*DLOGSEBX)*score_weights(i,1)
    else
-    XL=XL+(dot_product(xges(i,:),b)-ic(i)*DLOGSEBX)
+    XL=XL+casew(i)*(dot_product(xges(i,:),b)-ic(i)*DLOGSEBX)
    endif
    do j=1,ipges
-     FD(J)=FD(J)+(xges(i,J)-ic(i)*XEBX(J)/SEBX)*score_weights(i,j)                           
+     FD(J)=FD(J)+(xges(i,J)-ic(i)*XEBX(J)/SEBX)*score_weights(i,j)*casew(i)
      do k=1,ipges
-       SDa(J,K)=SDA(J,K)-ic(i)*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*dsqrt(score_weights(i,j))*dsqrt(score_weights(i,k))
+       SDa(J,K)=SDA(J,K)-ic(i)*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*dsqrt(score_weights(i,j))* &
+               dsqrt(score_weights(i,k))*casew(i)
        if (ilastlike .eq.1) then
-        SDb(J,K)=SDB(J,K)-ic(i)*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*(score_weights(i,j)*score_weights(i,k))
+        SDb(J,K)=SDB(J,K)-ic(i)*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*(score_weights(i,j)* &
+              score_weights(i,k))*casew(i)
        endif
      end do
    end do
   endif
  end do
  end if
- 
- 
+
+
  if (ifastmode .eqv. .true.) then
   xl=0.
   fd=0.
@@ -519,26 +521,26 @@ if (ifastmode .eqv. .false.) then
   xebx=0.
   xxebx=0.
   sebx=0.
-  ic_sum=0
+  dic_sum=0
   bx=matmul(xges,b)+offset
   ebx=dexp(bx)
- 
+
   do i=N,1,-1
    if (i .gt. 1) then   !look ahead because of Breslow tie correction
     if (t2(i) .eq. t2(i-1)) then
-     ic_current=0
-     ic_sum = ic_sum+ic(i)
+     dic_current=0
+     dic_sum = dic_sum+ic(i)*casew(i)               !ic_current is the weighted sum of censoring indicators
     else
-     ic_current=ic_sum+ic(i)
-     ic_sum=0
+     dic_current=dic_sum+ic(i)*casew(i)
+     dic_sum=0
     end if
    else
-    ic_current=ic_sum+ic(i)
-    ic_sum=0
+    dic_current=dic_sum+ic(i)*casew(i)
+    dic_sum=0
    end if
-   sebx=sebx+ebx(i)
+   sebx=sebx+ebx(i)*casew(i)
    do j=1,ipges
-    hhh0=xges(i,j)*ebx(i)
+    hhh0=xges(i,j)*ebx(i)*casew(i)
     xebx(j)=xebx(j)+hhh0
     do k=1,ipges
      hhh1=hhh0*xges(i,k)
@@ -551,36 +553,37 @@ if (ifastmode .eqv. .false.) then
    else
     dlogsebx=dlog(dlowest)
    endif
-    
 
-   if (ngv .eq. ipges) then 
-    XL=XL+(bx(i)*ic(i)-ic_current*DLOGSEBX)*score_weights(i,1)
+
+   if (ngv .eq. ipges) then
+    XL=XL+(bx(i)*ic(i)*casew(i)-dic_current*DLOGSEBX)*score_weights(i,1)
    else
-    XL=XL+(bx(i)*ic(i)-ic_current*DLOGSEBX)
+    XL=XL+(bx(i)*ic(i)*casew(i)-dic_current*DLOGSEBX)
    endif
    do j=1,ipges
-     FD(J)=FD(J)+(xges(i,J)*ic(i)-ic_current*XEBX(J)/SEBX)*score_weights(i,j)                           
+     FD(J)=FD(J)+(xges(i,J)*ic(i)*casew(i)-dic_current*XEBX(J)/SEBX)*score_weights(i,j)
      do k=1,ipges
-       SDa(J,K)=SDA(J,K)-ic_current*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*dsqrt(score_weights(i,j))*dsqrt(score_weights(i,k))
+       SDa(J,K)=SDA(J,K)-dic_current*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)* &
+            dsqrt(score_weights(i,j))*dsqrt(score_weights(i,k))
        if (ilastlike .eq.1) then
-        SDb(J,K)=SDB(J,K)-ic_current*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*(score_weights(i,j)*score_weights(i,k))
+        SDb(J,K)=SDB(J,K)-dic_current*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*(score_weights(i,j)*score_weights(i,k))
        endif
      end do
    end do
   end do
- 
- 
- 
+
+
+
  end if
- 
+
  wk=-sda
  vminv=wk
  EPS=.000000000001D0
  ifail=0
- CALL INVERT(WK,ipges,Ipges,ainv,Ipges,EPS,IFAIL)
+ CALL INVERT(WK,ipges,Ipges,ainv,IFAIL)
  vm=ainv
- if (ilastlike .eq. 1) then 
-        jcode=ifail 
+ if (ilastlike .eq. 1) then
+        jcode=ifail
         sdb=-sdb
         sdi=vm
         wk=matmul(sdi,sdb)
@@ -588,36 +591,37 @@ if (ifastmode .eqv. .false.) then
  endif
 ! if (irobust .ne. 0) then
 !  vm=sdi
-! end if 
+! end if
  RETURN
-END 
+END
 
-subroutine dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,doffset,sumabsoff)
+subroutine dfbetaresid_lw(N,IP,X,T1,t2,IC,B,score_weights,ntde,ft,ftmap,numbpatients,patid,vm,dfbeta,doffset, &
+    sumabsoff, casew)
 
  IMPLICIT DOUBLE PRECISION (A-H,O-Z)
- real*8, dimension (IP+ntde,IP+ntde) :: DINFO, DINFOI, SD, SDI, WK, help, vm
- real*8, dimension (IP+ntde,IP+ntde,IP+ntde) :: dabl
- real*8 zeitp
-! real*8, dimension (IP+ntde) :: XEBX, bresxges
- real*8, dimension (n) :: SEBX
- real*8, dimension (n,IP+ntde) :: XEBX, U_work
- real*8, dimension (IP+ntde,IP+ntde) :: XXEBX
-! real*8, dimension (N+1, IP, Ip, IP) :: XXXEBX
- real*8, dimension (IP+ntde) :: FD, B, h1, h2, h3
- real*8, dimension (N) :: EBX, BX, T1, t2, WKS, hh0, hh1, hh2, doffset
+ double precision, dimension (IP+ntde,IP+ntde) ::   vm
+ !double precision, dimension (IP+ntde,IP+ntde,IP+ntde) :: dabl
+ double precision zeitp
+! double precision, dimension (IP+ntde) :: XEBX, bresxges
+ double precision, dimension (n) :: SEBX, casew
+ double precision, dimension (n,IP+ntde) :: XEBX, U_work
+! double precision, dimension (IP+ntde,IP+ntde) :: XXEBX
+! double precision, dimension (N+1, IP, Ip, IP) :: XXXEBX
+ double precision, dimension (IP+ntde) ::  B
+ double precision, dimension (N) :: EBX, BX, T1, t2, hh0, doffset
  !integer, dimension (N) :: IC,ibresc
- !real*8, dimension (N,IP) :: X, bresx
+ !double precision, dimension (N,IP) :: X, bresx
  integer, dimension (N) :: IC
- real*8, dimension (N,IP) :: X
- real*8, dimension (N, ip+ntde) :: xges, score_weights
- integer ngv, ntde,numbpatients
+ double precision, dimension (N,IP) :: X
+ double precision, dimension (N, ip+ntde) :: xges, score_weights
+ integer  ntde,numbpatients
  integer, dimension (N) :: patid
  logical, dimension (N) :: maske
- real*8, dimension (N,ntde+1) :: ft
+ double precision, dimension (N,ntde+1) :: ft
  integer, dimension (ntde+1) :: ftmap
- real*8, dimension (numbpatients,ip+ntde) :: dfbeta
+ double precision, dimension (numbpatients,ip+ntde) :: dfbeta
 
- intrinsic dexp, dabs 
+ intrinsic dexp, dabs
 
  dlowest=0.000000001
  XL=0.
@@ -627,8 +631,8 @@ subroutine dfbetaresid_lw(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftma
  dfbeta(:,:)=0.
 
  xges(:,1:ip)=x
- 
- 
+
+
  ! brauchen sebx(i), xebx(i,k)
 sebx(:)=0.
 xebx(:,:)=0.
@@ -640,11 +644,11 @@ end if
 !doffset=0.
 
 do i=1, N
- if (ic(i) .ne. 0) then  
+ if (ic(i) .ne. 0) then
   zeitp=t2(i)-0.00001
 !  where ((t1 .lt. zeitp) .and. (t2.ge. zeitp) .and. (patid .ne. ipatient))   ! corr GH 100702, ipatient gibts hier noch nicht
    where ((t1 .lt. zeitp) .and. (t2.ge. zeitp))
-   maske=.true. 
+   maske=.true.
   elsewhere
    maske=.false.
   end where
@@ -663,12 +667,12 @@ do i=1, N
     bx=0.
     ebx=0.
    end where
-   sebx(i)=sum(ebx,1,maske)
+   sebx(i)=sum(ebx*casew,1,maske)
    do j=1,ipges
     hh0=xges(:,j)*ebx
-    xebx(i,j)=sum(hh0,1,maske)
+    xebx(i,j)=sum(hh0*casew,1,maske)
    end do
- end if 
+ end if
 end do
 
 xges(:,1:ip)=x(:,1:ip)
@@ -691,8 +695,7 @@ do i=1,n
    end if
    bxi=dot_product(xges(i,:),b)
    bxi=bxi+doffset(i)
-   u_work(i,:)=u_work(i,:)-score_weights(ih,:)*dexp(bxi)/sebx(ih)*(xges(i,:)-xebx(ih,:)/sebx(ih)) !corr. 091008 offset(i)
-!   u_work(i,:)=u_work(i,:)-score_weights(ih,:)*exp(dot_product(xges(i,:),b))/sebx(ih)*(xges(i,:)-xebx(ih,:)/sebx(ih)) !corr. 091008 offset(i)
+   u_work(i,:)=u_work(i,:)-casew(ih)*score_weights(ih,:)*dexp(bxi)/sebx(ih)*(xges(i,:)-xebx(ih,:)/sebx(ih)) ! casew(i) or casew(ih)?
   end if
  end do
 
@@ -705,7 +708,7 @@ do ipatient=1,numbpatients
   maske =.false.
  end where
  do j=1,IPges
-  dfbeta(ipatient,j)=sum(u_work(:,j),1,maske)
+  dfbeta(ipatient,j)=sum(u_work(:,j)*casew(:),1,maske)
  end do
 end do
 dfbeta=matmul(dfbeta,vm)
@@ -713,33 +716,34 @@ sumabsoff=sum(dabs(doffset))
 !sumabsoff=numbpatients   !checked, numbpatients is ok
 
 RETURN
-end                                                            
+end
 
-subroutine dfbetaresid(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,numbpatients,patid,ainv,dfbeta,offset, imaxit, xconv)
+subroutine dfbetaresid(N,IP,X,T1,t2,IC,B,score_weights,ntde,ft,ftmap,numbpatients,patid,ainv,dfbeta,offset, &
+   imaxit, xconv, casew)
 
  IMPLICIT DOUBLE PRECISION (A-H,O-Z)
- real*8, dimension (IP+ntde,IP+ntde) :: DINFO, DINFOI, SD, SDI, WK, help, vm
- real*8, dimension (IP+ntde,IP+ntde,IP+ntde) :: dabl
- real*8 SEBX, zeitp, xconv
-! real*8, dimension (IP+ntde) :: XEBX, bresxges
- real*8, dimension (IP+ntde) :: XEBX
- real*8, dimension (IP+ntde,IP+ntde) :: XXEBX, sda, ainv
-! real*8, dimension (N+1, IP, Ip, IP) :: XXXEBX
- real*8, dimension (IP+ntde) :: FD, B, h1, h2, h3, bsave, step
- real*8, dimension (N) :: EBX, BX, T1, t2, WKS, hh0, hh1, hh2, offset
+ double precision, dimension (IP+ntde,IP+ntde) :: WK
+ !double precision, dimension (IP+ntde,IP+ntde,IP+ntde) :: dabl
+ double precision SEBX, zeitp, xconv
+! double precision, dimension (IP+ntde) :: XEBX, bresxges
+ double precision, dimension (IP+ntde) :: XEBX
+ double precision, dimension (IP+ntde,IP+ntde) :: XXEBX, sda, ainv
+! double precision, dimension (N+1, IP, Ip, IP) :: XXXEBX
+ double precision, dimension (IP+ntde) :: FD, B,  bsave, step
+ double precision, dimension (N) :: EBX, BX, T1, t2,  hh0, hh1, offset, casew
  !integer, dimension (N) :: IC,ibresc
- !real*8, dimension (N,IP) :: X, bresx
+ !double precision, dimension (N,IP) :: X, bresx
  integer, dimension (N) :: IC
- real*8, dimension (N,IP) :: X
- real*8, dimension (N, ip+ntde) :: xges, score_weights
- integer ngv, ntde,numbpatients
+ double precision, dimension (N,IP) :: X
+ double precision, dimension (N, ip+ntde) :: xges, score_weights
+ integer  ntde,numbpatients
  integer, dimension (N) :: patid
  logical, dimension (N) :: maske
- real*8, dimension (N,ntde+1) :: ft
+ double precision, dimension (N,ntde+1) :: ft
  integer, dimension (ntde+1) :: ftmap
- real*8, dimension (numbpatients,ip+ntde) :: dfbeta
+ double precision, dimension (numbpatients,ip+ntde) :: dfbeta
 
- intrinsic dexp 
+ intrinsic dexp
 
  dlowest=0.000000001
  XL=0.
@@ -753,7 +757,7 @@ subroutine dfbetaresid(N,IP,X,T1,t2,IC,B,JCODE,ngv,score_weights,ntde,ft,ftmap,n
 do ipatient=1,numbpatients
  fd(:)=0.
  sda(:,:)=0.
- b=bsave 
+ b=bsave
  iconv = 0
  iter=0
  do while((iconv .eq. 0) .and. (iter .lt. imaxit))
@@ -762,12 +766,12 @@ do ipatient=1,numbpatients
      fd(:)=0.
      SDA(:,:)=0.
      do i=1,N
-      if (ic(i) .ne. 0 .and. (patid(i) .ne. ipatient)) then  
-    !  if (ibresc(i) .ne. 0) then   
+      if (ic(i) .ne. 0 .and. (patid(i) .ne. ipatient)) then
+    !  if (ibresc(i) .ne. 0) then
        zeitp=t2(i)-0.00001
        where ((t1 .lt. zeitp) .and. (t2.ge. zeitp) .and. (patid .ne. ipatient))
     !   where ((t1 .lt. zeitp) .and. (t2.ge. zeitp))
-        maske=.true. 
+        maske=.true.
        elsewhere
         maske=.false.
        end where
@@ -786,13 +790,13 @@ do ipatient=1,numbpatients
         bx=0.
         ebx=0.
        end where
-       sebx=sum(ebx,1,maske)
+       sebx=sum(ebx*casew,1,maske)
        do j=1,ipges
         hh0=xges(:,j)*ebx
-        xebx(j)=sum(hh0,1,maske)
+        xebx(j)=sum(hh0*casew,1,maske)
         do k=1,ipges
          hh1=hh0*xges(:,k)
-         xxebx(j,k)=sum(hh1,1,maske)
+         xxebx(j,k)=sum(hh1*casew,1,maske)
         end do
        end do
 
@@ -801,11 +805,12 @@ do ipatient=1,numbpatients
        else
         dlogsebx=dlog(dlowest)
        endif
-        
+
        do j=1,ipges
-        FD(J)=FD(J)+(Xges(i,J)-ic(i)*XEBX(J)/SEBX)*score_weights(i,j)    
+        FD(J)=FD(J)+(Xges(i,J)-ic(i)*XEBX(J)/SEBX)*score_weights(i,j)*casew(i)
          do k=1,ipges
-           SDa(J,K)=SDA(J,K)-ic(i)*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)*dsqrt(score_weights(i,j))*dsqrt(score_weights(i,k))
+           SDa(J,K)=SDA(J,K)-ic(i)*((xxebx(j,k)-XEBX(J)/SEBX*XEBX(K))/SEBX)  &
+           *dsqrt(score_weights(i,j))*dsqrt(score_weights(i,k))*casew(i)
          end do
        end do
 
@@ -814,11 +819,11 @@ do ipatient=1,numbpatients
      wk=-sda
      EPS=.000000000001D0
      ifail=0
-     CALL INVERT(WK,ipges,Ipges,ainv,Ipges,EPS,IFAIL)
+     CALL INVERT(WK,ipges,Ipges,ainv,IFAIL)
      step=-matmul(ainv,fd)
      IF(any(abs(step) .GT. XCONV)) then
        ICONV=0
-     else 
+     else
       iconv=1
      end if
      b=b-step
@@ -842,91 +847,12 @@ end
 
 
 
-!      ________________________________________________________
 
-! Code converted using TO_F90 by Alan Miller
-! Date: 2006-04-13  Time: 10:09:09
-
-!     |                                                        |
-!     |  COMPUTE THE DETERMINANT OF A GENERAL FACTORED MATRIX  |
-!     |                                                        |
-!     |    INPUT:                                              |
-!     |                                                        |
-!     |         A     -FACT'S OUTPUT                           |
-!     |                                                        |
-!     |    OUTPUT:                                             |
-!     |                                                        |
-!     |         DET,E --DETERMINANT IS DET*10.**E (E INTEGER)  |
-!     |                                                        |
-!     |    BUILTIN FUNCTIONS: ABS,ALOG10,DLOG10                |
-!     |________________________________________________________|
-
-FUNCTION det(e,a,nin)
-
-INTEGER, INTENT(OUT)            :: e
-integer, intent(in)             :: nin
-REAL*8, INTENT(IN)              :: a(3+nin*(nin+1))
-REAL*8 :: d,f,g
-DOUBLE PRECISION :: c
-INTEGER :: h,i,j,k,l,m,n
-
-intrinsic DABS, dlog10
-
-d = a(1)
-IF ( DABS(d) == 1230 ) GO TO 10
-!WRITE(6,*) 'ERROR: MUST FACTOR BEFORE COMPUTING DETERMINANT'
-!STOP
-10    e = 0
-IF ( d < 0. ) GO TO 70
-n = a(2)
-IF ( n == 1 ) GO TO 80
-d = 1.
-f = 2.**64
-g = 1./f
-h = 64
-m = n + 1
-j = 0
-k = 4
-l = 3 - m + m*n
-DO  i = k,l,m
-  j = j + 1
-  IF ( a(i) > j ) d = -d
-  d = d*a(i+j)
-  20         IF ( DABS(d) < f ) GO TO 30
-  e = e + h
-  d = d*g
-  GO TO 20
-  30         IF ( DABS(d) > g ) CYCLE
-  e = e - h
-  d = d*f
-  GO TO 30
-END DO
-d = d*a(l+m)
-IF ( e /= 0 ) GO TO 50
-det = d
-RETURN
-50    IF ( d == 0. ) GO TO 90
-c = DLOG10(DABS(d)) + e*DLOG10(2.d0)
-e = c
-c = c - e
-IF ( c <= 0.d0 ) GO TO 60
-c = c - 1
-e = e + 1
-60    f = 10.**c
-IF ( d < 0. ) f = -f
-det = f
-RETURN
-70    det = 0.
-RETURN
-80    det = a(5)
-RETURN
-90    e = 0
-GO TO 70
-END FUNCTION det
 
 !
 
 ! Code converted using TO_F90 by Alan Miller
+! TO_F90 is provided under the General Public License Version 2.0 (GPL-2)
 ! Date: 2006-04-13  Time: 10:10:03
 
 !      ________________________________________________________
@@ -950,13 +876,13 @@ END FUNCTION det
 !     |    PACKAGE SUBROUTINES: PACK                           |
 !     |________________________________________________________|
 
-SUBROUTINE fact(ain,a,la,n)
+SUBROUTINE fact(ain,a,n)
 
-INTEGER, INTENT(IN)                      :: la
+!INTEGER, INTENT(IN)                      :: la
 INTEGER, INTENT(IN)                      :: n
-REAL*8, INTENT(in OUT)                     :: a(3+n*(n+1))
-real*8, intent(in)              ::  ain(n,n)
-REAL*8 :: r,s,t
+double precision, INTENT(in OUT)                     :: a(3+n*(n+1))
+double precision, intent(in)              ::  ain(n,n)
+double precision :: r,s,t
 INTEGER :: e,f,g,h,i,j,k,l, m, o,p
 
 intrinsic dabs
@@ -1050,6 +976,7 @@ END SUBROUTINE fact
 !
 
 ! Code converted using TO_F90 by Alan Miller
+! TO_F90 is provided under the General Public License Version 2.0 (GPL-2)
 ! Date: 2006-04-13  Time: 10:10:05
 
 !      ________________________________________________________
@@ -1074,7 +1001,7 @@ SUBROUTINE packna(a,la,n)
 
 INTEGER, INTENT(IN)                      :: la
 INTEGER, INTENT(IN)                      :: n
-REAL*8, INTENT(OUT)                        :: a(n*n)
+double precision, INTENT(OUT)                        :: a(n*n)
 
 INTEGER :: h,i,j,k,l, o
 
@@ -1102,6 +1029,7 @@ END SUBROUTINE packna
 !
 
 ! Code converted using TO_F90 by Alan Miller
+! TO_F90 is provided under the General Public License Version 2.0 (GPL-2)
 ! Date: 2006-04-13  Time: 10:09:46
 
 !      ________________________________________________________
@@ -1130,9 +1058,9 @@ SUBROUTINE vert(v,lv,n,w)
 
 INTEGER, INTENT(IN OUT)                  :: lv
 INTEGER, INTENT(IN)                      :: n
-REAL*8, INTENT(IN OUT)                     :: v(lv,N)
-REAL*8, INTENT(OUT)                     :: w(N)
-REAL*8 :: s,t
+double precision, INTENT(IN OUT)                     :: v(lv,N)
+double precision, INTENT(OUT)                     :: w(N)
+double precision :: s,t
 INTEGER :: i,j,k,l,m, p
 
 !Anm GH bei den Dimensionen die Indizes ver?ndert, waren v(lv,1) und w(1) vorher
@@ -1194,7 +1122,7 @@ GO TO 50
 !     -----------------------
 !     |*** PIVOT COLUMNS ***|
 !     -----------------------
-90    l = w(k)
+90    l = int(w(k))
 DO  i = 1,n
   t = v(i,l)
   v(i,l) = v(i,k)

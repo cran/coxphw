@@ -1,7 +1,0 @@
-2014.03.14  3.00  all fp-transformation functions are declared as internal functions;
-                  add concordance probability to summary;
-                  add functions: coef, concord, plotshape, wald;
-                  include data: gastric and biofeedback;
-                  appearance of plotw plots is slightly changed;
-                  simplify input (instead of AHR, AHR.norobust, ARE, PH, just use template)
-                  R. 3.0.3

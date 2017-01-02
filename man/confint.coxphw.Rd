@@ -6,7 +6,7 @@
 
 \description{ Computes confidence intervals for one or more parameters in a model fitted by 
               \code{coxphw}. Objects of this class have methods for the functions \code{summary}, 
-              \code{print}, \code{coef}, \code{vcov}, and \code{confint}.}
+              \code{print}, \code{coef}, \code{vcov}, \code{plot}, and \code{confint}.}
 
 \usage{ \method{confint}{coxphw}(object, parm, level = 0.95, ...) }
 

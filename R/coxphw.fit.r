@@ -9,11 +9,14 @@ coxphw.fit <- function
  pc=TRUE,
  pc.time=TRUE,
  standardize=TRUE,
- fixed=NULL
+ fixed=NULL,
+ caseweights
  )
 ### fitter function
 ### 2010-07-07
-{       robust <- (PARMS[3]==1 | PARMS[3]==3)
+{
+#  browser()
+        robust <- (PARMS[3]==1 | PARMS[3]==3)
         jack <- (PARMS[3]>1)
         k <- ncol(obj$mm1)    # number covariates w/o time-dep effects
         k2 <- k + obj$NTDE
@@ -21,14 +24,14 @@ coxphw.fit <- function
         if(NTDE>0 & k>1) pc<-FALSE
         kk <- k
         maxid <- max(id)
-        
+
         ## standardize model matrix (next 5 lines old code 2010-07)
 #        sd1 <- sd(obj$mm1)
 #        sd2 <- sd(obj$timedata)
 #        Z.sd <- c(sd1, sd2 * sd1[obj$timeind])
 #        ZxZ <- as.matrix(Z.sd) %*% t(as.matrix(Z.sd)) # used often to restandardize ...
 #        obj$mm1 <- scale(obj$mm1, FALSE, sd1)
-       ## next lines new code: 
+       ## next lines new code:
         if (pc.time==TRUE & ncol(obj$timedata)>1) {
 #       pc<-FALSE
             pc.t1<-prcomp(obj$timedata, center=FALSE)
@@ -36,6 +39,7 @@ coxphw.fit <- function
             obj$timedata<-predict(pc.t1,obj$timedata)
         }
         mm1.orig<-obj$mm1
+        mmm <- cbind(obj$mm1, obj$timedata) # model matrix inc. time data    # 20150527
         if (pc==TRUE & sum(obj$ind[1:kk])>1) {
                    pc1<-prcomp(obj$mm1, center=FALSE)
                    rot.mat<-pc1$rotation
@@ -57,13 +61,15 @@ coxphw.fit <- function
        mm1.orig <- scale(mm1.orig, FALSE, sd1.orig)
        ### end new code
        if(!is.null(fixed)) fixed[!is.na(fixed)]<-fixed[!is.na(fixed)]*Z.sd[!is.na(fixed)]
-        
+
         ##if(ind.offset)
         obj$mm1o <- if(PARMS[16] != 0) cbind(obj$offset.values, obj$mm1) else obj$mm1
         obj$timedata <- scale(obj$timedata, FALSE, sd2)
-        mmm <- cbind(obj$mm1, obj$timedata) # model matrix inc. time data
+#        mmm <- cbind(obj$mm1, obj$timedata) # model matrix inc. time data
         if(is.null(CARDS))
-          CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, id)
+#          CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, id)
+#          CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, id, 1)         ### 20151215 DD, 2 hinschreiben austesten
+          CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, id, caseweights)         ### 20151215 DD, 2 hinschreiben austesten
         if(!sorted) CARDS <- CARDS[order(obj$resp[, 2], -obj$resp[, 3]), ]
         ##   if (offset) {
         ##    IOARRAY[1,1]<-0    # first variable is offset
@@ -78,7 +84,7 @@ coxphw.fit <- function
         }
         if(obj$NTDE >0 )
           IOARRAY[4, (k+1):k2] <- obj$timeind
-        
+
         ## --------------- Aufruf Fortran-Routine WEIGHTEDCOX ------------
         storage.mode(CARDS) <- storage.mode(PARMS) <- storage.mode(IOARRAY) <- storage.mode(DFBETA) <- "double"
         value <- .Fortran("weightedcox",
@@ -117,7 +123,7 @@ coxphw.fit <- function
              cov.j <-rot.mat.blowup %*% cov.j  %*%  t(rot.mat.blowup)
               dfbeta.resid <- t(rot.mat.blowup %*% t(dfbeta.resid))
             }
-             
+
           }
         if (pc.time==TRUE &  ncol(obj$timedata)>1) {
            rot.mat.t.blowup<-matrix(0,k+NTDE,k+NTDE)
@@ -133,7 +139,7 @@ coxphw.fit <- function
               cov.j <- rot.mat.t.blowup %*% cov.j %*% t(rot.mat.t.blowup)
               dfbeta.resid <- t(rot.mat.t.blowup %*% t(dfbeta.resid))
             }
-              
+
         }
 
         res <- list(
@@ -141,7 +147,7 @@ coxphw.fit <- function
                     outpar=value$outpar,
                     outtab=matrix(value$outtab, nrow=3+3*k2),   # changed georg 090604
                     dfbeta.resid=dfbeta.resid,
-                    coef.orig=value$outtab[3,  ], 
+                    coef.orig=value$outtab[3,  ],
                     coefs=coefs, # coefficients
                     cov.ls=cov.ls,      # covariances
                     cov.lw=cov.lw,

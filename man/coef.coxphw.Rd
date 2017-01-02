@@ -7,7 +7,7 @@
 
 \description{ This class of objects is returned by the \code{coxphw} function. 
   Objects of this class have methods for the functions \code{summary}, \code{print}, \code{coef}, 
-  \code{vcov}, and \code{confint}. }
+  \code{vcov}, \code{plot} and \code{confint}. }
 
 \usage{ \method{coef}{coxphw}(object, ...)
         %%\method{coefficients}{coxphw}(object, ...)

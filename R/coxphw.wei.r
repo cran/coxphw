@@ -1,7 +1,7 @@
 qeq<-function(a,b,tol=1e-6){
  abs(a-b)<tol
  }
- 
+
 
 coxphw.wei <- function
 (
@@ -17,24 +17,27 @@ coxphw.wei <- function
  trunc.weights,
  id,
  cov.name,
- NFP
+ NFP,
+ caseweights                     # caseweights, are denoted as "weights" in coxphw
  )
+
+
 ### calculate weights for coxphw
 ### 2008-05
-### if fp( ) terms are present, then all effects will be weighted (provided any effect is specified in breslow, prentice of tarone; 
+### if fp( ) terms are present, then all effects will be weighted (provided any effect is specified in breslow, prentice of tarone;
 ###         it does not matter which effects are specified there)
 {
         NTDE <- obj$NTDE
         k <- ncol(obj$mm1)              # number covariates
         n <- nrow(data)
-        
+
         weights <- matrix(1, n, k+NTDE) # weight matrix
         w.raw <- weights[,1]
         w <- w.raw
         formulaAll <- as.formula(paste(as.character(formula)[2], "1", sep="~"))
         ## fit <- survfit(formulaAll, data)
         my.survfit<-getFromNamespace("survfit","survival")
-        fit <- my.survfit(Surv(obj$resp[,1],obj$resp[,2],obj$resp[,3])~1, data)
+        fit <- my.survfit(Surv(obj$resp[,1],obj$resp[,2],obj$resp[,3])~1, data, weights = caseweights)
         event <- event1 <- obj$resp[, 3]
         event1[-1][diff(obj$resp[, 2]) == 0] <- 0   # first of simultan. events
         ties <- (diff(c(-999, obj$resp[, 2])) == 0) ## change GH 080411
@@ -47,7 +50,7 @@ coxphw.wei <- function
             time.obs.km[id.i]<-max(obj$resp[id==id.i,2])
             cens.obs.km[id.i]<-1-max(obj$resp[id==id.i,3])
            }
-           obskm<-my.survfit(Surv(time.obs.km,cens.obs.km)~1)
+           obskm<-my.survfit(Surv(time.obs.km,cens.obs.km)~1, weights = caseweights)
            obskm$surv<-cbind(1,obskm$surv)
            obskm$time<-cbind(0,obskm$time)
            if(is.na(breslow)&is.na(prentice)&is.na(taroneware)) {
@@ -76,7 +79,7 @@ coxphw.wei <- function
                         else w[i]<-0
                 }
                 w <- w ^0.5
-                
+
                 w[!event] <- 0
                 w[ties] <- w[c(ties[-1], FALSE)]
                 w.raw<-w
@@ -149,14 +152,14 @@ coxphw.wei <- function
                 if(NFP==0) weights[, match(cov.nameP, cov.name)] <- w else weights<-matrix(w,length(w),k+NTDE)
 #               weights[, match(cov.nameP, cov.name)] <- w
         }
-        
+
         if(!censcorr)
           w.obskm <- rep(1,n)
-        
+
         ## calculate weight matrix
         ### weight truncation (30-04-2009)
         quant <- function(x)  { as.vector(quantile(x, probs=trunc.weights)) }
-        quant.w<-quant(w)        
+        quant.w<-quant(w)
         w[w>quant.w]<-quant.w
         w.matrix <- cbind(time=obj$resp[,2], w.raw, w.obskm, w)[obj$resp[,3] != 0,]
         orderw <- rank(w.matrix[,1])
@@ -165,17 +168,17 @@ coxphw.wei <- function
         ## are all weight columns the same?
         same <- all(weights == weights[, 1])
        truncat <- apply(weights, 2, quant)
-  
+
        for (i.wt in 1:ncol(weights))
        {
          weights[weights[,i.wt]>truncat[i.wt], i.wt] <- truncat[i.wt]
        }
-       
+
         ## number of weighted variables
         NGV <- sum(weights[1, ] != 1 | weights[n, ] != 1)
 
         weights <- weights * scale.weights
-        
+
         ## return list
         list(
              weights=weights,

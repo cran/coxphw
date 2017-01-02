@@ -36,8 +36,8 @@ was finished (\code{thealing}).
   the data and use them for non-commercial purposes. }
 
 \references{ Denk, D.-M. & Kaider, A. (1997). Videoendoscopic Biofeedback: A Simple Method to Improve 
-the Efficacy of Swallowing Rehabilitation of Patients After Head and Neck Surgery. \emph{Journal of 
-Oto-Rhino-Laryngology, Head and Neck Surgery} \bold{59}, 100-105. }
+the Efficacy of Swallowing Rehabilitation of Patients After Head and Neck Surgery. \emph{ORL J OTO-RHINO-LARY}
+\bold{59}, 100-105. }
 
 \examples{
 data("biofeedback")
