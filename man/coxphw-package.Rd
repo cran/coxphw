@@ -11,7 +11,8 @@
              provides unbiased average hazard ratio estimates also in case of non-proportional hazards.
              The package provides options to estimate time-dependent effects conveniently by
              including interactions of covariates with arbitrary functions of time, with or without
-             making use of the weighting option. }
+             making use of the weighting option. For more details we refer to Dunkler, Ploner, Schemper and Heinze
+             (Journal of Statistical Software, 2018, \doi{10.18637/jss.v084.i02}).  }
              % Additionally estimation of nonlinear effects using fractional polynomials similar to the
              % MFP algorithm (Royston, Sauerbrei, 2008) is provided. This feature can also be used to
              % estimate the interaction of a covariate with a nonlinear function of time.
@@ -20,8 +21,8 @@
 \tabular{ll}{
 Package: \tab \code{coxphw}\cr
 Type: \tab Package\cr
-Version: \tab 4.0.0\cr
-Date: \tab 2016-12-23\cr
+Version: \tab 4.0.1\cr
+Date: \tab 2018-04-16\cr
 License: \tab GPL-2\cr
 }
 
@@ -63,7 +64,9 @@ Data sets included in the \pkg{coxphw} package are
 \author{Georg Heinze, Meinhard Ploner, Daniela Dunkler \cr
         {Maintainer: \email{georg.heinze@meduniwien.ac.at}} }
 
-\references{Dunkler D, Schemper M, Heinze G. (2010) Gene Selection in Microarray Survival Studies Under
+\references{Dunkler D, Ploner M, Schemper M, Heinze G. (2018) Weighted Cox Regression Using the {R} Package {coxphw}. \emph{JSS} \bold{84}, 1--26, \doi{10.18637/jss.v084.i02}.
+
+Dunkler D, Schemper M, Heinze G. (2010) Gene Selection in Microarray Survival Studies Under
 Possibly Non-Proportional Hazards. \emph{Bioinformatics} \bold{26}:784-90.
 
 Lin D and Wei L (1989). The Robust Inference for the Cox Proportional Hazards Model.

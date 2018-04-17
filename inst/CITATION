@@ -1,18 +1,20 @@
-citHeader("To cite package 'coxphw' in publications use:")
+bibentry(bibtype = "Article",
+  title        = "Weighted Cox Regression Using the {R} Package {coxphw}",
+  author       = c(person(given = "Daniela",
+                          family = "Dunkler"),
+                   person(given = "Meinhard",
+                          family = "Ploner"),
+                   person(given = "Michael",
+                          family = "Schemper"),
+                   person(given = "Georg",
+                          family = "Heinze",
+                          email = "georg.heinze@meduniwien.ac.at")),
+  journal      = "Journal of Statistical Software",
+  year         = "2018",
+  volume       = "84",
+  number       = "2",
+  pages        = "1--26",
+  doi          = "10.18637/jss.v084.i02",
 
-year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
-vers <- paste("R package version", meta$Version)
-
-citEntry(entry="Manual",
-         title = "coxphw: Weighted Estimation in Cox Regression",
-         author = personList(as.person("Georg Heinze"),
-                             as.person("Meinhard Ploner"),
-                             as.person("Daniela Dunkler")),
-         year = year,
-         note = vers,
-
-         textVersion =
-         paste("Georg Heinze, Meinhard Ploner, Daniela Dunkler (",
-               year,
-               "). coxphw: Weighted Estimation in Cox Regression. ",
-               vers, ".", sep=""))
+  header       = "To cite coxphw in publications use:"
+)

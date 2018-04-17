@@ -2,12 +2,19 @@
 
 \title{NEWS file for the \code{coxphw} package}
 
-% \section{UPCOMING CHANGES VERSION 4.0.1 }{
+% \section{UPCOMING CHANGES VERSION 4.0.2 }{
 % \itemize{
 %  \item { predict: add newdata, na.action=na.pas }
 %  \item { offset: with numbers  }
+%  \item { clean rebuild using roxygen, testhat, etc.  }
  %}
 %}
+
+ \section{CHANGES \code{coxphw} VERSION 4.0.1 (2018-04-16, compiled under R 3.4.4)}{
+ \itemize{
+  \item { citation and JSS example code is updated due to JSS publication 2018 }
+ }
+}
 
 \section{CHANGES in \code{coxphw} VERSION 4.0.0 (2015-12-30, compiled under R 3.2.2) }{
  \itemize{

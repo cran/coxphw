@@ -1,14 +1,17 @@
 Package: coxphw
 Type: Package
 Title: Weighted Estimation in Cox Regression
-Version: 4.0.0
-Date: 2017-01-02
+Version: 4.0.1
+Date: 2018-04-16
 Authors@R: c(person("Georg", "Heinze", role=c("aut","cre"), email="georg.heinze@meduniwien.ac.at"),
            person("Meinhard", "Ploner", role="aut",),
      		person("Daniela", "Dunkler", role="aut"))
 Description: Implements weighted estimation in Cox regression as proposed by
-             Schemper, Wakounig and Heinze (Statistics in Medicine, 2009, <doi:10.1002/sim.3623>). Weighted Cox regression
-             provides unbiased average hazard ratio estimates also in case of non-proportional hazards.
+             Schemper, Wakounig and Heinze (Statistics in Medicine, 2009, 
+             <doi:10.1002/sim.3623>) and as described in Dunkler, Ploner, Schemper and 
+             Heinze (Journal of Statistical Software, 2018, <doi:10.18637/jss.v084.i02>). 
+             Weighted Cox regression provides unbiased average hazard ratio 
+             estimates also in case of non-proportional hazards. 
              Approximated generalized concordance probability an effect size measure for clear-cut
              decisions can be obtained.
              The package provides options to estimate time-dependent effects conveniently by
@@ -19,10 +22,10 @@ Suggests: knitr, rmarkdown
 NeedsCompilation: yes
 License: GPL-2
 VignetteBuilder: knitr
-Packaged: 2017-01-02 10:53:56 UTC; Biometrikus
+Packaged: 2018-04-17 12:25:14 UTC; Biometrician
 Author: Georg Heinze [aut, cre],
   Meinhard Ploner [aut],
   Daniela Dunkler [aut]
 Maintainer: Georg Heinze <georg.heinze@meduniwien.ac.at>
 Repository: CRAN
-Date/Publication: 2017-01-02 16:52:58
+Date/Publication: 2018-04-17 16:32:16 UTC

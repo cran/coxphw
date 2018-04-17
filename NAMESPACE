@@ -7,7 +7,7 @@ export(concord, coxphw,  wald, coxphw.control, PT, fp.power)
 #### import from other packages:
 importFrom("survival","survfit","Surv")   # survfit von survival Surv
 importFrom("graphics", "abline","legend","lines", "plot")
-importFrom("stats","as.formula", "coef", "confint", "confint.default", 
+importFrom("stats","as.formula", "coef", "confint", "confint.default",
            "model.extract", "model.frame", "model.matrix", "na.omit",
 		   "pchisq", "prcomp", "predict", "qchisq", "qnorm",
 		   "quantile", "sd","terms.formula")

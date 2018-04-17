@@ -116,7 +116,7 @@ proportional hazards. Therefore, since application of weighted Cox regression us
 proportional hazards assumption, the robust Lin-Wei covariance estimate is used by default (\code{robust = }
 \code{TRUE}).
 
-If some regression coefficients are held constant using \code{betafix}, no standard errors 
+If some regression coefficients are held constant using \code{betafix}, no standard errors
 are given for these coefficients as they are not estimated in the model. The global Wald test
 only relates to those variables for which regression coefficients were estimated.
 
@@ -191,7 +191,9 @@ fixed at 1.
        \code{breslow}, \code{taroneware}). From Version 3.0.0 on the old syntax is disabled.
        From Version 4.0.0 estimation of fractional polynomials is disabled. }
 
-\references{Lin D and Wei L (1989). The Robust Inference for the Cox Proportional Hazards Model.
+\references{Dunkler D, Ploner M, Schemper M, Heinze G. (2018) Weighted Cox Regression Using the {R} Package {coxphw}. \emph{JSS} \bold{84}, 1--26, \doi{10.18637/jss.v084.i02}.
+
+Lin D and Wei L (1989). The Robust Inference for the Cox Proportional Hazards Model.
 \emph{J AM STAT ASSOC} \bold{84}, 1074-1078.
 
 Lin D (1991). Goodness-of-Fit Analysis for the Cox Regression Model Based on a Class of Parameter
@@ -217,7 +219,7 @@ Xu R and O'Quigley J (2000). Estimating Average Regression Effect Under Non-Prop
 
 \author{Georg Heinze, Meinhard Ploner, Daniela Dunkler}
 
-\seealso{ \code{\link{concord}}, \code{\link{plot.coxphw}}, \code{\link{predict}}, \code{\link{plot.coxphw.predict}}, \code{\link[survival:coxph]{coxph} }}
+\seealso{ \code{\link{concord}}, \code{\link{plot.coxphw}}, \code{\link{predict.coxphw}}, \code{\link{plot.coxphw.predict}}, \code{\link[survival:coxph]{coxph} }}
 
 \examples{
 data("gastric")

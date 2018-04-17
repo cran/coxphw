@@ -20,8 +20,8 @@
     \code{"lp"} for the linear predictors, \cr
      \code{"risk"} for the risk scores \code{exp(lp)} \cr
      \code{"shape"} for visualizing a nonlinear effect of \code{x}, \cr
-    \code{"slice.x"}  for slicing an interaction of type \code{fun(x)*z} at values of \code{x}, 
-    \code{"slice.z"} for slicing an interaction of type \code{fun(x)*z} at a value of \code{z}, \cr 
+    \code{"slice.x"}  for slicing an interaction of type \code{fun(x)*z} at values of \code{x},
+    \code{"slice.z"} for slicing an interaction of type \code{fun(x)*z} at a value of \code{z}, \cr
     \code{"slice.time"} for slicing a time-by-covariate interaction of type \code{z + fun(time):z} at values of \code{time} \cr
     See details. }
   \item{x}{ name of the continuous or time variable (use "") for \code{type = "shape"},
@@ -74,7 +74,7 @@
           categorical variable) and \code{newx} (for these values of \code{x} the effect
           estimates are obtained) must be given.
 
-          Note that if the model formula contains time-by-covariate interactions, then the linear predictor 
+          Note that if the model formula contains time-by-covariate interactions, then the linear predictor
           and the risk score are obtained for the failure or censoring time of each subject.
 }
 %          \code{plot.x} must include only positive numbers greater than 0.
@@ -125,7 +125,7 @@ predict(fit1, type = "slice.time", x = "yrs", z = "radiation", newx = c(0.5, 1, 
 
 
 fit2 <- coxphw(Surv(yrs, status) ~ log(yrs) * radiation, data = gastric, template = "PH")
-#summary(fit2)
+summary(fit2)
 
 predict(fit2, type = "slice.time", x = "yrs", z = "radiation", newx = c(0.5, 1, 2),
         verbose = TRUE, exp = TRUE, pval = TRUE)
