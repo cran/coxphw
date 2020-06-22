@@ -2,13 +2,22 @@
 
 \title{NEWS file for the \code{coxphw} package}
 
-% \section{UPCOMING CHANGES VERSION 4.0.2 }{
+% \section{UPCOMING CHANGES VERSION 4.0.3 }{
 % \itemize{
 %  \item { predict: add newdata, na.action=na.pas }
 %  \item { offset: with numbers  }
-%  \item { clean rebuild using roxygen, testhat, etc.  }
+%  \item { clean rebuild using roxygen, testthat, etc.  }
  %}
 %}
+
+ \section{CHANGES \code{coxphw} VERSION 4.0.2 (2020-06-16, compiled under R 4.0.1)}{
+ \itemize{
+  \item { add testthat }
+  \item { add information on the sample size in \code{print} and \code{summary} }
+  \item { only observations with missing values in variables mentioned in the formula are deleted. }
+  \item { add option \code{clusterid} in \code{coxphw} }
+ }
+}
 
  \section{CHANGES \code{coxphw} VERSION 4.0.1 (2018-04-16, compiled under R 3.4.4)}{
  \itemize{

@@ -1,15 +1,15 @@
-## ---- include=FALSE------------------------------------------------------
+## ---- include=FALSE-----------------------------------------------------------
 library(knitr)
-opts_chunk$set(out.extra='style="display:block; margin: auto"', fig.align="center")
+#opts_chunk$set(out.extra='style="display:block; margin: auto"', fig.align="center")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #########################################################################################
 ## R code for
 ## Weighted Cox Regression using the R package coxphw
 ## written by Daniela Dunkler
 #########################################################################################
 
-## This R example code works with R >=3.4.2 and coxphw-package 4.0.1.
+## This R example code works with R >=3.4.2 and coxphw-package >=4.0.0.
 
 ## load R packages
 library("coxphw")
@@ -106,7 +106,7 @@ plotcoxzph <- function(x, resid = TRUE, se = TRUE, df = 4, nsmo = 40, var, wd = 
   }
 }
 
-## ---- fig.width = 7, fig.height = 5--------------------------------------
+## ---- fig.width = 7, fig.height = 5-------------------------------------------
 ## ------------------------------------------
 data("gastric", package = "coxphw")
 head(gastric)
@@ -182,7 +182,7 @@ summary(coxph(Surv(yrs, status) ~ radiation + cluster(id), data = gastric, x = T
 ## or equivalently
 ## coxphw(Surv(yrs, status) ~ radiation, data = gastric, template = "PH")
 
-## ---- fig.width = 7, fig.height = 5--------------------------------------
+## ---- fig.width = 7, fig.height = 5-------------------------------------------
 ## ------------------------------------------
 data("biofeedback", package = "coxphw")
 head(biofeedback)
@@ -244,7 +244,7 @@ if (pdfind) {  pdf(file = "figure2C.pdf", width = 5, height = 5) }
   legend("topright", legend = "log2heal", bty = "n", inset = 0.08, cex = 1.5)
 if (pdfind) {  dev.off() }
 
-## ---- fig.width = 7, fig.height = 5--------------------------------------
+## ---- fig.width = 7, fig.height = 5-------------------------------------------
 simulation <- function(n1 = 100, n2 = 100, sim = 10, seed = 123,
                        type = c("ph", "nph1", "nph2", "nph3"), scalewei = NULL,
                        shapewei = NULL, beta = NULL, scaleexp = NULL, shapewei2 = NULL,
@@ -534,7 +534,7 @@ print(sim2$results[, 1:6])
 print(round(sim2$popc[1], 2))          # true population-c * 100
 }
 
-## ---- fig.width = 7, fig.height = 5--------------------------------------
+## ---- fig.width = 7, fig.height = 5-------------------------------------------
 ## prepare Table 2
 models <- c("Ignoring non-proportional hazards *", "HR Cox regression",
             "Estimating piecewise constant HRs *", "HR 1st year", "HR >1st year",
@@ -742,7 +742,7 @@ Table2 <- Table2[, 1:2]
 dimnames(Table2)[[2]] <- c("Estimate (95% CI)", "p")
 Table2
 
-## ---- fig.width = 7, fig.height = 5--------------------------------------
+## ---- fig.width = 7, fig.height = 5-------------------------------------------
 ## ignore non-proportional hazards and apply a Cox model
 ## (use breslow weights to make it directly comparable to coxphw)
 bfit2 <- coxphw(Surv(thdur, success) ~ bfb + log2heal, data = biofeedback, template = "PH")

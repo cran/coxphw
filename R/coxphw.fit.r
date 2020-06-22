@@ -1,7 +1,7 @@
 coxphw.fit <- function
 (
  obj,
- id,
+ clusterid,
  weights,
  PARMS,
  CARDS=NULL ,
@@ -23,7 +23,7 @@ coxphw.fit <- function
         NTDE <- obj$NTDE
         if(NTDE>0 & k>1) pc<-FALSE
         kk <- k
-        maxid <- max(id)
+        maxclusterid <- max(clusterid)
 
         ## standardize model matrix (next 5 lines old code 2010-07)
 #        sd1 <- sd(obj$mm1)
@@ -69,13 +69,13 @@ coxphw.fit <- function
         if(is.null(CARDS))
 #          CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, id)
 #          CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, id, 1)         ### 20151215 DD, 2 hinschreiben austesten
-          CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, id, caseweights)         ### 20151215 DD, 2 hinschreiben austesten
+          CARDS <- cbind(obj$mm1o, obj$resp, weights, obj$timedata, clusterid, caseweights)         ### 20151215 DD, 2 hinschreiben austesten
         if(!sorted) CARDS <- CARDS[order(obj$resp[, 2], -obj$resp[, 3]), ]
         ##   if (offset) {
         ##    IOARRAY[1,1]<-0    # first variable is offset
         ##    IOARRAY[2,1]<-Z.sd[1]    # first variable is offset
         ##   }
-        DFBETA <- matrix(0, maxid, k2)
+        DFBETA <- matrix(0, maxclusterid, k2)
         IOARRAY <- rbind(rep(1, k2), matrix(0, 2+3*k2, k2))       #changed georg 090604
         if(!is.null(fixed)){
           IOARRAY[1,!is.na(fixed)]<-0
@@ -108,7 +108,7 @@ coxphw.fit <- function
         else cov.lw<- NULL
         if(jack) cov.j <- matrix(value$outtab[(2*k2+4):(3+3*k2), ], ncol=k2) / ZxZ
         else cov.j <- NULL
-        if(robust | jack) dfbeta.resid <- value$dfbetaresid / matrix(Z.sd, maxid, k2, byrow=TRUE)
+        if(robust | jack) dfbeta.resid <- value$dfbetaresid / matrix(Z.sd, maxclusterid, k2, byrow=TRUE)
         if (pc==TRUE & sum(obj$ind[1:kk])>1) {
            rot.mat.blowup<-matrix(0,k+NTDE,k+NTDE)
            diag(rot.mat.blowup)<-1

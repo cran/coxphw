@@ -21,8 +21,8 @@
 \tabular{ll}{
 Package: \tab \code{coxphw}\cr
 Type: \tab Package\cr
-Version: \tab 4.0.1\cr
-Date: \tab 2018-04-16\cr
+Version: \tab 4.0.2\cr
+Date: \tab 2020-06-16\cr
 License: \tab GPL-2\cr
 }
 
@@ -62,7 +62,7 @@ Data sets included in the \pkg{coxphw} package are
        and \code{plot.coxphw.predict}. }
 
 \author{Georg Heinze, Meinhard Ploner, Daniela Dunkler \cr
-        {Maintainer: \email{georg.heinze@meduniwien.ac.at}} }
+        {Maintainer: \email{daniela.dunkler@meduniwien.ac.at}} }
 
 \references{Dunkler D, Ploner M, Schemper M, Heinze G. (2018) Weighted Cox Regression Using the {R} Package {coxphw}. \emph{JSS} \bold{84}, 1--26, \doi{10.18637/jss.v084.i02}.
 

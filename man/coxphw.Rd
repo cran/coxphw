@@ -17,7 +17,7 @@ functions of time, with or without making use of the weighting option. }
 coxphw(formula, data, template = c("AHR", "ARE", "PH"), subset, na.action,
        robust = TRUE, jack = FALSE, betafix = NULL, alpha = 0.05,
        trunc.weights = 1, control, caseweights, x = TRUE, y = TRUE,
-       verbose = FALSE, sorted = FALSE, id = NULL, \dots)
+       verbose = FALSE, sorted = FALSE, id = NULL, clusterid = NULL, \dots)
 }
 
 \arguments{
@@ -33,7 +33,8 @@ coxphw(formula, data, template = c("AHR", "ARE", "PH"), subset, na.action,
                    Recommended and default template is \code{"AHR"}. }
   \item{subset}{expression indicating which subset of the rows of data should be used in the fit.
                 All observations are included by default.}
-  \item{na.action}{missing-data filtering. Defaults to \code{options$na.action}. Applied after subsetting data.}
+  \item{na.action}{missing-data filtering. Defaults to \code{options$na.action}. Applied after subsetting data,
+                   but applied to the all variables in the data set (not only those listed in the formula).}
   \item{robust}{ if set to TRUE, the robust covariance estimate (Lin-Wei) is used; otherwise the Lin-Sasieni
                  covariance estimate is applied. Default is TRUE. }
   \item{jack}{ if set to TRUE, the variance is based on a complete jackknife. Each individual (as
@@ -63,9 +64,13 @@ coxphw(formula, data, template = c("AHR", "ARE", "PH"), subset, na.action,
   % (particularly, for estimation with  \code{fp()}-terms).
   \item{sorted}{ if set to TRUE, the data set will not be sorted prior to passing it to FORTRAN.
                  This may speed up computations. Default is FALSE. }
-  \item{id}{ a vector of subject identification integer numbers starting from 1. These IDs
-             are used for computing the robust covariance matrix. If \code{id = NA} (the default)
-             the program assumes that each line of the data set refers to a distinct subject. }
+  \item{id}{ a vector of subject identification integer numbers starting from 1 used only if the data are
+             in the counting process format. These IDs are used to compute the robust covariance matrix.
+             If \code{id = NA} (the default) the program assumes that each line of the data set refers to
+             a distinct subject. }
+  \item{clusterid}{a vector of cluster identification integer numbers starting from 1. These IDs are used
+                   to compute the robust covariance matrix. If \code{clusterid = NA} (the default) the program
+                   assumes that no cluster exist. }
   \item{\dots}{ additional arguments. }
 }
 %\item{alpha.fp}{ a vector of length three which specifies p-values to include a fractional

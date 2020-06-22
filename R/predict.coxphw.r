@@ -28,20 +28,24 @@ predict.coxphw <- function(object, type = c("shape", "slice.time", "slice.z", "s
   type <- match.arg(type)
 
   if (type == "shape") {
-    if (is.na(newx) || is.na(refx) || is.null(x)) stop ("If type = shape => x, refx and newx must be specified.")
+    if (any(is.na(newx), is.na(refx), is.null(x))) stop ("If type = shape => x, refx and newx must be specified.")
+#    if (is.na(newx) || is.na(refx) || is.null(x)) stop ("If type = shape => x, refx and newx must be specified.")
     ref.type <- "value"
     z <- NULL
   } else
     if (type == "slice.time") {
-      if (is.na(newx) || is.null(z) || is.null(x)) stop ("If type = slice.time => x, z and newx must be specified.")
+      if (any(is.na(newx), is.null(z), is.null(x))) stop ("If type = slice.time => x, z and newx must be specified.")
+#      if (is.na(newx) || is.null(z) || is.null(x)) stop ("If type = slice.time => x, z and newx must be specified.")
       ref.type <- "interaction.time"
     } else
       if (type == "slice.z") {
-       if (is.na(newx) || is.null(x) || is.null(z)) stop ("If type = slice.z => x, z, at and newx must be specified.")
+       if (any(is.na(newx), is.null(x), is.null(z))) stop ("If type = slice.z => x, z, at and newx must be specified.")
+#       if (is.na(newx) || is.null(x) || is.null(z)) stop ("If type = slice.z => x, z, at and newx must be specified.")
         ref.type <- at
       } else
         if (type == "slice.x") {
-          if (is.na(newx) || is.null(x) || is.null(z)) stop ("If type = slice.x => x, z and newx must be specified.")
+          if (any(is.na(newx), is.null(x), is.null(z))) stop ("If type = slice.x => x, z and newx must be specified.")
+#          if (is.na(newx) || is.null(x) || is.null(z)) stop ("If type = slice.x => x, z and newx must be specified.")
           ref.type <- "interaction.treat"
         }
 

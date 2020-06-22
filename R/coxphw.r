@@ -21,6 +21,7 @@ coxphw <- function(
   verbose = FALSE,                       # print fitting information on screen
   sorted = FALSE,                        # if data is sorted by stoptime and -cens
   id = NULL,                             # identifier: numeric or character or factor
+  clusterid = NULL,                      # identifier for clusters, relevant for robust covariance
   ...
 
   ### 12-2015: old syntax disabled
@@ -62,8 +63,8 @@ coxphw <- function(
   if (missing(formula))
     formula = attr(data, "formula")
   if (!missing(subset))
-    data = data[subset, , drop=FALSE]
-  data = na.action(data)
+    data = data[subset, , drop = FALSE]
+  data = na.action(data[, all.vars(formula)])
 
   template <- match.arg(template)
 
@@ -186,6 +187,12 @@ coxphw <- function(
     id <- as.numeric(as.factor(id))
   maxid <- max(id)
 
+  if(is.null(clusterid))
+    clusterid <- id
+  else
+    clusterid <- as.numeric(as.factor(clusterid))
+  maxclusterid<-max(clusterid)
+
   ## here only ONCE the full model matrix is spanned with all possible fp-effects
   obj.full <- decomposeSurv(formula, data, sort=FALSE) ##, offset)
   if ((obj.full$NFP != 0) & (!is.null(betafix))) {
@@ -232,13 +239,13 @@ coxphw <- function(
     NGV <- sum(WW[1, ] != 1 | WW[n, ] != 1)
 
     PARMS <- c(n, k, robcov, control$iter.max, control$maxhs, control$maxstep, control$xconv, control$gconv,
-               0, 0, 0, 0, NGV, obj$NTDE, maxid, ind.offset)
+               0, 0, 0, 0, NGV, obj$NTDE, maxclusterid, ind.offset)
 
     ## **************** fit model and return Wald *********************
     if(verbose)
       cat(paste(obj.full$covnames[obj$ind], collapse=", "), "\t\t")
 
-    interim <- coxphw.fit(obj, id, WW, PARMS, sorted=sorted, pc=FALSE, fixed=betafix, caseweights=caseweights)
+    interim <- coxphw.fit(obj, clusterid, WW, PARMS, sorted=sorted, pc=FALSE, fixed=betafix, caseweights=caseweights)
     wald <- interim$outpar[9] # FIT
     iterations <- interim$outpar[10]
     if (iterations>=control$iter.max) warn <- " No convergence!"
@@ -442,14 +449,21 @@ coxphw <- function(
     id <- as.numeric(as.factor(id))
   maxid <- max(id)
 
+  if(is.null(clusterid))
+    clusterid <- id
+  else
+    clusterid <- as.numeric(as.factor(clusterid))
+  maxclusterid<-max(clusterid)
+
+
   PARMS <- c(n, k, robcov, control$iter.max, control$maxhs, control$maxstep, control$xconv, control$gconv,
-             0, 0, 0, 0, W$NGV, NTDE, maxid, ind.offset)
+             0, 0, 0, 0, W$NGV, NTDE, maxclusterid, ind.offset)
   ##   if (offset) {
   ##    IOARRAY[1,1]<-0    # first variable is offset
   ##    IOARRAY[2,1]<-Z.sd[1]    # first variable is offset
   ##   }
   ## **************** fit model *********************
-  value0 <- coxphw.fit(obj, id, W$weights, PARMS, sorted=sorted, pc=control$pc, pc.time=control$pc.time, fixed=betafix, caseweights=caseweights)
+  value0 <- coxphw.fit(obj, clusterid, W$weights, PARMS, sorted=sorted, pc=control$pc, pc.time=control$pc.time, fixed=betafix, caseweights=caseweights)
   cov.ls <- value0$cov.ls
   if(!robust)  {
     cov.lw<-NULL

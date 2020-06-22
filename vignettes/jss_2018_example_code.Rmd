@@ -11,14 +11,14 @@ vignette: >
 
 ```{r, include=FALSE}
 library(knitr)
-opts_chunk$set(out.extra='style="display:block; margin: auto"', fig.align="center")
+#opts_chunk$set(out.extra='style="display:block; margin: auto"', fig.align="center")
 ```
 
 
 Introduction
 ------------
  
-This is the R example code from 'Weighted Cox Regression Using the R Package **coxphw**' by Dunkler, Ploner, Schemper and Heinze (Journal of Statistical Software, 2018, \doi{10.18637/jss.v084.i02}). It works with R >=3.2.2 and **coxphw** package 4.0.1.
+This is the R example code from 'Weighted Cox Regression Using the R Package **coxphw**' by [Dunkler, Ploner, Schemper and Heinze (Journal of Statistical Software, 2018, 84: 1-26, doi: 10.18637/jss.v084.i02](https://www.jstatsoft.org/article/view/v084i02)). It works with R >=3.2.2 and **coxphw** package >=4.0.0.
 
 
 ```{r}
@@ -28,7 +28,7 @@ This is the R example code from 'Weighted Cox Regression Using the R Package **c
 ## written by Daniela Dunkler
 #########################################################################################
 
-## This R example code works with R >=3.4.2 and coxphw-package 4.0.1.
+## This R example code works with R >=3.4.2 and coxphw-package >=4.0.0.
 
 ## load R packages
 library("coxphw")

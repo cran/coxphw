@@ -1,11 +1,12 @@
 Package: coxphw
 Type: Package
 Title: Weighted Estimation in Cox Regression
-Version: 4.0.1
-Date: 2018-04-16
-Authors@R: c(person("Georg", "Heinze", role=c("aut","cre"), email="georg.heinze@meduniwien.ac.at"),
-           person("Meinhard", "Ploner", role="aut",),
-     		person("Daniela", "Dunkler", role="aut"))
+Version: 4.0.2
+Date: 2020-06-16
+Authors@R: c(
+    person("Daniela", "Dunkler", email="daniela.dunkler@meduniwien.ac.at", role=c("aut", "cre")),
+    person("Georg", "Heinze", role="aut"),
+    person("Meinhard", "Ploner", role="aut"))
 Description: Implements weighted estimation in Cox regression as proposed by
              Schemper, Wakounig and Heinze (Statistics in Medicine, 2009, 
              <doi:10.1002/sim.3623>) and as described in Dunkler, Ploner, Schemper and 
@@ -18,14 +19,15 @@ Description: Implements weighted estimation in Cox regression as proposed by
              including interactions of covariates with arbitrary functions of time, with or without
              making use of the weighting option.
 Depends: R (>= 3.0.2), survival
-Suggests: knitr, rmarkdown
+Suggests: knitr, rmarkdown, testthat
 NeedsCompilation: yes
-License: GPL-2
+License: GPL-3
 VignetteBuilder: knitr
-Packaged: 2018-04-17 12:25:14 UTC; Biometrician
-Author: Georg Heinze [aut, cre],
-  Meinhard Ploner [aut],
-  Daniela Dunkler [aut]
-Maintainer: Georg Heinze <georg.heinze@meduniwien.ac.at>
+RoxygenNote: 7.1.0
+Packaged: 2020-06-22 07:38:56 UTC; Biometrician
+Author: Daniela Dunkler [aut, cre],
+  Georg Heinze [aut],
+  Meinhard Ploner [aut]
+Maintainer: Daniela Dunkler <daniela.dunkler@meduniwien.ac.at>
 Repository: CRAN
-Date/Publication: 2018-04-17 16:32:16 UTC
+Date/Publication: 2020-06-22 08:40:11 UTC
