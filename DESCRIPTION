@@ -1,8 +1,8 @@
 Package: coxphw
 Type: Package
 Title: Weighted Estimation in Cox Regression
-Version: 4.0.2
-Date: 2020-06-16
+Version: 4.0.3
+Date: 2023-10-31
 Authors@R: c(
     person("Daniela", "Dunkler", email="daniela.dunkler@meduniwien.ac.at", role=c("aut", "cre")),
     person("Georg", "Heinze", role="aut"),
@@ -23,11 +23,14 @@ Suggests: knitr, rmarkdown, testthat
 NeedsCompilation: yes
 License: GPL-3
 VignetteBuilder: knitr
-RoxygenNote: 7.1.0
-Packaged: 2020-06-22 07:38:56 UTC; Biometrician
+RoxygenNote: 7.2.3
+Encoding: UTF-8
+URL: https://github.com/biometrician/coxphw
+BugReports: https://github.com/biometrician/coxphw/issues
+Packaged: 2023-11-28 11:28:44 UTC; Biometrician
 Author: Daniela Dunkler [aut, cre],
   Georg Heinze [aut],
   Meinhard Ploner [aut]
 Maintainer: Daniela Dunkler <daniela.dunkler@meduniwien.ac.at>
 Repository: CRAN
-Date/Publication: 2020-06-22 08:40:11 UTC
+Date/Publication: 2023-11-28 14:00:02 UTC
